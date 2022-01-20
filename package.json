@@ -1,0 +1,19 @@
+{
+  "name": "electron_ecgdrawelement",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Aldrich-Huang/Electron_ECGDrawElement.git"
+  },
+  "author": "Ken Huang",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Aldrich-Huang/Electron_ECGDrawElement/issues"
+  },
+  "homepage": "https://github.com/Aldrich-Huang/Electron_ECGDrawElement#readme"
+}
