@@ -57,7 +57,6 @@ class ECGGridCanvasElement{
     constructor(ElementID) {
 
         this.#Element = document.getElementById(ElementID);
-        console.log(this.#Element);
         if(this.#Element.getContext){
             this.#Elementctx = this.#Element.getContext('2d');
         }
@@ -153,6 +152,10 @@ class ECGGridCanvasElement{
         this.#Elementctx.beginPath();
         this.#Elementctx.clearRect(0, 0, this.#Element.width, this.#Element.height);
         this.#Elementctx.closePath();
+    }
+
+    GetCanvasInfo(){
+        return this.#Canvas_Info;
     }
 
 }

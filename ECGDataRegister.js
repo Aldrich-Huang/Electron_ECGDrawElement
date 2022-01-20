@@ -46,7 +46,7 @@ class ECGDataRegister{
         this.#DataList = new Array(ListSize);
         this.#InputIndex = -1;
         this.#InputOverflow = false;
-        this.#OutputIndex = 0;
+        this.#OutputIndex = -1;
         this.#DataSpace = 1;
     }
 

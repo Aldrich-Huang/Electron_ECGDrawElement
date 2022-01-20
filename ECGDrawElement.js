@@ -19,6 +19,8 @@ const ECGDataRegisterClass = require('./ECGDataRegister.js').ECGDataRegister;
 
 const ECGGridCanvasElementClass = require('./ECGGridCanvasElement.js').ECGGridCanvasElement;
 
+const ECGCanvasElementClass = require('./ECGCanvasElement.js').ECGCanvasElement;
+
 class ECGDrawElement{
     static CallBackFuncID = {'WindowResize': 0, 'ECGElementMouseMove':1,'ECGElementMouseDown':2,'ECGElementMouseUp':3}
     static ObjGridMode = {'FixedGridSize':10,'FixedGridQuantity_W':11, 'FixedGridQuantity_H':12}
@@ -30,26 +32,14 @@ class ECGDrawElement{
     ShowPos = {'x':0, 'y':0};
     PastEvent = {'x':0, 'y':0};
 
-
-    #Canvas_GridInfo = {'Color': '#999999', 'LineWidth': 1,'GridMode':ECGDrawElement.ObjGridMode.FixedGridSize, 'smGridSize': 5, 'GridQuantity':-1};
-    #Canvas_ECGInfo = {'Color': '#00c100', 'LineWidth': 1,'GridShowSec':-1}
+    
     #CallBackFunList;
-
-    #ECGDataList;
-
-    #ECGIntervalID; 
-    #DrawECGIndex = 0;
-    #NowEcgData=0;
-    #PreEcgData=0;
 
     //Obj Element Ctrl
     #ObjGridElement
+    #oECGGridCanvasElement
 
     constructor(MainWinId) {
-
-        this.#ECGDataList = new ECGDataRegisterClass(5000);
-        
-        
 
         var winelementid = MainWinId + "_Show";
         var gridelementid = MainWinId + "_CanvasGrid";
@@ -73,21 +63,18 @@ class ECGDrawElement{
         this.WinWidth = this.WinElement.offsetWidth; 
         this.WinHeight = this.WinElement.offsetHeight;
         
-        
+        //Build draw ECG grid class
         this.#ObjGridElement = new ECGGridCanvasElementClass(gridelementid);
         this.#ObjGridElement.SetCanvasSize(this.WinWidth, this.WinHeight);
 
 
-        this.ECGElement = document.getElementById(ecgelementid);
-        
-        this.ECGElement.width  = this.WinWidth;
-        this.ECGElement.height = this.WinHeight;
+        //Build draw ECG class
+        this.#oECGGridCanvasElement = new ECGCanvasElementClass(ecgelementid);
+        this.#oECGGridCanvasElement.SetCanvasSize(this.WinWidth, this.WinHeight);
+        this.#oECGGridCanvasElement.AddEventCallBack(ECGCanvasElementClass.CallBackFuncID.ECGElementMouseMove, this.#ECGElementMouseMove);
+        this.#oECGGridCanvasElement.AddEventCallBack(ECGCanvasElementClass.CallBackFuncID.ECGElementMouseDown, this.#ECGElementMouseDown);
 
-        if(this.ECGElement.getContext){
-            this.ECGElementctx = this.ECGElement.getContext('2d');
-        }
-        this.ECGElement.addEventListener('mousemove', this.#ECGElementMouseMove);
-        this.ECGElement.addEventListener('mousedown', this.#ECGElementMouseDown);
+
         window.addEventListener('resize', this.#WinElementResize);
         //-----------------------------------
         //set all element mouseup event.
@@ -101,18 +88,10 @@ class ECGDrawElement{
 
     SetGridMode = (gridmode, value)=>{
         return this.#ObjGridElement.SetGridMode(gridmode, value);
-
     }
 
     SetDrawGridPara = (linecolor, linewidth)=>{
         this.#ObjGridElement.SetDrawLinePara(linecolor, linewidth);
-    }
-    SetGridSize = (gridsize) =>{
-        this.#Canvas_GridInfo.smGridSize = gridsize;
-    }
-
-    GetGridSize = () => {
-        return this.#Canvas_GridInfo.smGridSize;
     }
 
     DrawGrid = ()=>{
@@ -123,28 +102,26 @@ class ECGDrawElement{
         this.#ObjGridElement.ClearView();
     }
 
-    SetDrawECGPara = (gridColor, gridWidth)=>{
-        
-        this.#Canvas_ECGInfo.Color = gridColor;
-        this.#Canvas_ECGInfo.LineWidth = gridWidth;
+    //--------------------------------------------
+
+    SetDrawECGPara = (ECGLineColor, ECGLineWidth)=>{
+        this.#oECGGridCanvasElement.SetDrawLinePara(ECGLineColor,ECGLineWidth);
     }
 
 
     SetECGShowSec = (sec)=>{
-        if(sec>5){
-            this.#Canvas_ECGInfo.GridShowSec=sec;
-            this.ECGElement.width  = (this.#Canvas_GridInfo.smGridSize * 5 * 2) * this.#Canvas_ECGInfo.GridShowSec;
-        }else{
-            this.ECGElement.width  = this.WinWidth;
-            this.#Canvas_ECGInfo.GridShowSec=-1;
-        }
+        // if(sec>5){
+        //     this.#Canvas_ECGInfo.GridShowSec=sec;
+        //     this.ECGElement.width  = (this.#Canvas_GridInfo.smGridSize * 5 * 2) * this.#Canvas_ECGInfo.GridShowSec;
+        // }else{
+        //     this.ECGElement.width  = this.WinWidth;
+        //     this.#Canvas_ECGInfo.GridShowSec=-1;
+        // }
 
     }
 
     ClearECG=()=>{
-        this.ECGElementctx.beginPath();
-        this.ECGElementctx.clearRect(0, 0, this.WinWidth, this.WinHeight);
-        this.ECGElementctx.closePath();
+        this.#oECGGridCanvasElement.ClearView();
     }
 
     GetWinPosition=()=>{
@@ -195,45 +172,15 @@ class ECGDrawElement{
 
 
     StartDrawECG = () => {
-        this.#ECGIntervalID = setInterval(this.#DrawECG, 10); 
-
-    }
-
-    #DrawECG = () =>{
-        var WinInfo = this.GetWinInfo();
-        var DrawRange =Math.floor( this.#ECGDataList.GetSize() / WinInfo.width);
-        this.#ECGDataList.SetDateSpace(DrawRange);
-
-        do{
-            this.#NowEcgData = this.#ECGDataList.GetData();
-            if(this.#NowEcgData != -1){
-                this.ECGElementctx.strokeStyle = this.#Canvas_ECGInfo.Color;
-                this.ECGElementctx.lineWidth = this.#Canvas_ECGInfo.LineWidth;
-
-                this.ECGElementctx.beginPath();
-                
-                this.ECGElementctx.clearRect(this.#DrawECGIndex, 0, 25, WinInfo.height)
-
-                
-                this.ECGElementctx.moveTo(this.#DrawECGIndex-1, (WinInfo.height/2) + this.#PreEcgData);
-                this.ECGElementctx.lineTo(this.#DrawECGIndex, (WinInfo.height/2) + this.#NowEcgData);
-                this.#DrawECGIndex = (this.#DrawECGIndex + 1) % WinInfo.width;
-                
-                this.#PreEcgData = this.#NowEcgData;
-                
-
-                this.ECGElementctx.stroke();
-                this.ECGElementctx.closePath();
-            }
-        }while(this.#NowEcgData != -1);
+        this.#oECGGridCanvasElement.StartDrawECG(10);
     }
 
     CloseDrawECG = () => {
-        clearInterval(this.#ECGIntervalID);
+        this.#oECGGridCanvasElement.CloseDrawECG();
     }
 
     SetECGData = (data)=>{
-        this.#ECGDataList.SetData(data);
+        this.#oECGGridCanvasElement.PushECGData(data);
     }
     //********************************************************************************/
     //                              Event callback function
@@ -246,35 +193,25 @@ class ECGDrawElement{
             this.WinWidth = this.WinElement.offsetWidth; 
             this.WinHeight = this.WinElement.offsetHeight;
             
-            // this.GridElement.width  = this.WinWidth;
-            // this.GridElement.height = this.WinHeight;
+            var GridElementInfo= this.#ObjGridElement.GetCanvasInfo();
+            var ECGElementInfo= this.#oECGGridCanvasElement.GetCanvasInfo();
 
-            
-            this.ECGElement.width  = this.#Canvas_ECGInfo.GridShowSec>=5? (this.#Canvas_GridInfo.smGridSize * 5 * 2) * this.#Canvas_ECGInfo.GridShowSec: this.WinWidth;
-            this.ECGElement.height = this.WinHeight;
+            this.#oECGGridCanvasElement.SetCanvasSize(ECGElementInfo.GridShowSec>=5? (GridElementInfo.smGridSize * 5 * 2) * ECGElementInfo.GridShowSec: this.WinWidth, this.WinHeight)
 
             this.DrawGrid();
-            //this.DrawECG();
+
 
             if(this.#CallBackFunList[ECGDrawElement.CallBackFuncID.WindowResize]!=undefined){
                 this.#CallBackFunList[ECGDrawElement.CallBackFuncID.WindowResize](this.WinElement.id,this.GetWinInfo());
-            }
-
-            //重新繪製
-            switch(this.#Canvas_GridInfo.GridMode){
-                case ECGDrawElement.ObjGridMode.FixedGridQuantity_W:
-                    this.#Canvas_GridInfo.smGridSize=(WinPosInfo.width/this.#Canvas_GridInfo.GridQuantity)/5;
-                break;
-                case ECGDrawElement.ObjGridMode.FixedGridQuantity_H:
-                    this.#Canvas_GridInfo.smGridSize=(WinPosInfo.height/this.#Canvas_GridInfo.GridQuantity)/5;
-                break;
             }
 
             this.#ObjGridElement.SetCanvasSize(this.WinWidth,this.WinHeight);
             this.#ObjGridElement.Draw ();
 
             this.ClearECG();
-            this.#DrawECGIndex = 0;
+
+            this.#oECGGridCanvasElement.ResetIndex();
+
         }
     }
 
