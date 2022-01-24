@@ -23,7 +23,10 @@ const ECGCanvasElementClass = require('./ECGCanvasElement.js').ECGCanvasElement;
 
 class ECGDrawElement{
     static CallBackFuncID = {'WindowResize': 0, 'ECGElementMouseMove':1,'ECGElementMouseDown':2,'ECGElementMouseUp':3}
-    static ObjGridMode = {'FixedGridSize':10,'FixedGridQuantity_W':11, 'FixedGridQuantity_H':12}
+    static ObjGridMode = ECGGridCanvasElementClass.ObjGridMode;
+    static ObjElementMode = {'Dynamic_DrawingECG':50,'Static_DrawingECG': 51};
+    static ObjGainItem = ECGCanvasElementClass.ObjGainItem;
+    
 
     Clicked = false;
     WinWidth = 200;
@@ -32,14 +35,14 @@ class ECGDrawElement{
     ShowPos = {'x':0, 'y':0};
     PastEvent = {'x':0, 'y':0};
 
-    
+    #Element_Info = {'Mode':ECGDrawElement.ObjElementMode.Static_DrawingECG};
     #CallBackFunList;
 
     //Obj Element Ctrl
     #ObjGridElement
-    #oECGGridCanvasElement
+    #oECGCanvasElement
 
-    constructor(MainWinId) {
+    constructor(MainWinId, ECGElementDrawMode = ECGDrawElement.ObjElementMode.Static_DrawingECG) {
 
         var winelementid = MainWinId + "_Show";
         var gridelementid = MainWinId + "_CanvasGrid";
@@ -69,10 +72,15 @@ class ECGDrawElement{
 
 
         //Build draw ECG class
-        this.#oECGGridCanvasElement = new ECGCanvasElementClass(ecgelementid);
-        this.#oECGGridCanvasElement.SetCanvasSize(this.WinWidth, this.WinHeight);
-        this.#oECGGridCanvasElement.AddEventCallBack(ECGCanvasElementClass.CallBackFuncID.ECGElementMouseMove, this.#ECGElementMouseMove);
-        this.#oECGGridCanvasElement.AddEventCallBack(ECGCanvasElementClass.CallBackFuncID.ECGElementMouseDown, this.#ECGElementMouseDown);
+        this.#oECGCanvasElement = new ECGCanvasElementClass(ecgelementid);
+        this.SetDrawMode(ECGElementDrawMode);
+
+
+        this.#oECGCanvasElement.AddEventCallBack(ECGCanvasElementClass.CallBackFuncID.ECGElementMouseMove, this.#ECGElementMouseMove);
+        this.#oECGCanvasElement.AddEventCallBack(ECGCanvasElementClass.CallBackFuncID.ECGElementMouseDown, this.#ECGElementMouseDown);
+        
+
+
 
 
         window.addEventListener('resize', this.#WinElementResize);
@@ -86,8 +94,18 @@ class ECGDrawElement{
         
     }
 
+    
+
+    
+
+
     SetGridMode = (gridmode, value)=>{
-        return this.#ObjGridElement.SetGridMode(gridmode, value);
+        if(!this.#ObjGridElement.SetGridMode(gridmode, value))
+            return false;
+        var ECGElementInfo = this.#ObjGridElement.GetCanvasInfo();
+        console.log('ECGElementInfo.smGridSize',ECGElementInfo.smGridSize);
+        this.#oECGCanvasElement.SetsmGridSize(ECGElementInfo.smGridSize);
+        return true;
     }
 
     SetDrawGridPara = (linecolor, linewidth)=>{
@@ -105,7 +123,7 @@ class ECGDrawElement{
     //--------------------------------------------
 
     SetDrawECGPara = (ECGLineColor, ECGLineWidth)=>{
-        this.#oECGGridCanvasElement.SetDrawLinePara(ECGLineColor,ECGLineWidth);
+        this.#oECGCanvasElement.SetDrawLinePara(ECGLineColor,ECGLineWidth);
     }
 
 
@@ -121,7 +139,7 @@ class ECGDrawElement{
     }
 
     ClearECG=()=>{
-        this.#oECGGridCanvasElement.ClearView();
+        this.#oECGCanvasElement.ClearView();
     }
 
     GetWinPosition=()=>{
@@ -169,18 +187,68 @@ class ECGDrawElement{
         return true;
     }
 
+    SetGain = (gain) => {
+        switch(gain){
+            case ECGDrawElement.ObjGainItem['Gain_0.5']:
+            case ECGDrawElement.ObjGainItem['Gain_1.0']:
+            case ECGDrawElement.ObjGainItem['Gain_2.0']:
+            case ECGDrawElement.ObjGainItem['Gain_4.0']:
+                return ECGCanvasElementClass.SetGainInfo(gain);
+                break;
+            default:
+                return false;
+                break;
+        }
+    }
 
+    SetDrawMode(ElementMode){
+        if(this.#Element_Info.Mode === ECGDrawElement.ObjElementMode.Static_DrawingECG)
+            this.CloseDrawECG();
+
+        switch(ElementMode){
+            case ECGDrawElement.ObjElementMode.Dynamic_DrawingECG:          
+                this.#Element_Info.Mode = ElementMode;  
+                this.#oECGCanvasElement.SetCanvasSize(this.WinWidth, this.WinHeight); 
+                console.log('SetDrawMode','ECGDrawElement.ObjElementMode.Dynamic_DrawingECG');       
+                break;
+            case ECGDrawElement.ObjElementMode.Static_DrawingECG:           
+                this.#Element_Info.Mode = ElementMode;    
+                var ECGElementInfo = this.#oECGCanvasElement.GetCanvasInfo();
+                var GridElementInfo = this.#ObjGridElement.GetCanvasInfo();
+                console.log('SetDrawMode','ECGDrawElement.ObjElementMode.Static_DrawingECG');    
+                this.#oECGCanvasElement.SetCanvasSize(ECGElementInfo.ECGData_Sec * (GridElementInfo.smGridSize * 5 * 2), this.WinHeight);      
+                break;
+            default:                                                        
+                return false;
+        }
+        return true;
+    }
+
+
+    GetDrawMode(){
+        return this.#Element_Info.Mode;
+    }
 
     StartDrawECG = () => {
-        this.#oECGGridCanvasElement.StartDrawECG(10);
+        console.log('GetDrawMode',this.GetDrawMode());
+        if(this.GetDrawMode() === ECGDrawElement.ObjElementMode.Static_DrawingECG){
+            console.log('Static');
+            this.#oECGCanvasElement.StaticDrawECG();
+        }else{
+            console.log('Dynamic')
+            this.#oECGCanvasElement.StartDynamicDrawECG(10);
+        }
+
+        
+        return true;
     }
 
     CloseDrawECG = () => {
-        this.#oECGGridCanvasElement.CloseDrawECG();
+        this.#oECGCanvasElement.CloseDynamicDrawECG();
     }
 
     SetECGData = (data)=>{
-        this.#oECGGridCanvasElement.PushECGData(data);
+        this.#oECGCanvasElement.PushECGData(data);
     }
     //********************************************************************************/
     //                              Event callback function
@@ -193,12 +261,7 @@ class ECGDrawElement{
             this.WinWidth = this.WinElement.offsetWidth; 
             this.WinHeight = this.WinElement.offsetHeight;
             
-            var GridElementInfo= this.#ObjGridElement.GetCanvasInfo();
-            var ECGElementInfo= this.#oECGGridCanvasElement.GetCanvasInfo();
-
-            this.#oECGGridCanvasElement.SetCanvasSize(ECGElementInfo.GridShowSec>=5? (GridElementInfo.smGridSize * 5 * 2) * ECGElementInfo.GridShowSec: this.WinWidth, this.WinHeight)
-
-            this.DrawGrid();
+            
 
 
             if(this.#CallBackFunList[ECGDrawElement.CallBackFuncID.WindowResize]!=undefined){
@@ -206,18 +269,36 @@ class ECGDrawElement{
             }
 
             this.#ObjGridElement.SetCanvasSize(this.WinWidth,this.WinHeight);
-            this.#ObjGridElement.Draw ();
+            this.DrawGrid();
+            
 
-            this.ClearECG();
+            this.CloseDrawECG();
 
-            this.#oECGGridCanvasElement.ResetIndex();
+            var GridElementInfo = this.#ObjGridElement.GetCanvasInfo();
+            var ECGElementInfo= this.#oECGCanvasElement.GetCanvasInfo();
 
+            switch(this.#Element_Info.Mode){
+                case ECGDrawElement.ObjElementMode.Dynamic_DrawingECG:
+                    this.#oECGCanvasElement.SetCanvasSize(this.WinWidth, this.WinHeight);        
+                    break;
+                case ECGDrawElement.ObjElementMode.Static_DrawingECG:
+                    this.#oECGCanvasElement.SetCanvasSize(ECGElementInfo.ECGData_Sec * (GridElementInfo.smGridSize * 5 * 2), this.WinHeight);      
+                    break;
+            }
+
+            this.#oECGCanvasElement.SetsmGridSize(GridElementInfo.smGridSize);
+
+            this.#oECGCanvasElement.ResetIndex();
+            this.StartDrawECG();
+            
         }
     }
 
     #ECGElementMouseMove = (event) => {
         if(this.Clicked){
             var WinPosInfo = this.GetWinInfo();
+            var ECGElementInfo = this.#oECGCanvasElement.GetCanvasSize();
+
             if(event.pageX>this.PastEvent.x)
             this.ShowPos.x = this.ShowPos.x-1;
             else if(event.pageX<this.PastEvent.x)
@@ -226,8 +307,8 @@ class ECGDrawElement{
             if(this.ShowPos.x<0)
             this.ShowPos.x=0;
         
-            if(this.ShowPos.x > (this.ECGElement.offsetWidth-WinPosInfo.width)){
-                this.ShowPos.x=(this.ECGElement.offsetWidth-WinPosInfo.width);
+            if(this.ShowPos.x > (ECGElementInfo.width - WinPosInfo.width)){
+                this.ShowPos.x=(ECGElementInfo.width - WinPosInfo.width);
             }
 
             if(event.pageY>this.PastEvent.y)
@@ -238,8 +319,8 @@ class ECGDrawElement{
             if(this.ShowPos.y<0)
             this.ShowPos.y=0;
             
-            if(this.ShowPos.y>(this.ECGElement.offsetHeight-WinPosInfo.height))
-            this.ShowPos.y = (this.ECGElement.offsetHeight-WinPosInfo.height);
+            if(this.ShowPos.y>(ECGElementInfo.height - WinPosInfo.height))
+            this.ShowPos.y = (ECGElementInfo.height - WinPosInfo.height);
 
             
             this.PastEvent.x = event.pageX;

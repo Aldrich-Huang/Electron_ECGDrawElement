@@ -4,7 +4,9 @@ const ECGDrawElementClass = require('./ECGDrawElement.js').ECGDrawElement;
 class ECGDrawElementCtrl{
     static ObjGridMode = {'FixedGridSize': ECGDrawElementClass.ObjGridMode.FixedGridSize,
                         'FixedGridQuantity_W': ECGDrawElementClass.ObjGridMode.FixedGridQuantity_W}
-
+                        
+    static ObjElementMode = ECGDrawElementClass.ObjElementMode;
+    
     DrawElementList=[];
     IntervalID;
     #ECGDataListIndex = 0;
@@ -21,6 +23,7 @@ class ECGDrawElementCtrl{
         }
         
         var Index=0;
+
         for(var i = 0 ;i<ElementInfo.length;i++){
             try{
                 
@@ -28,9 +31,11 @@ class ECGDrawElementCtrl{
                     throw "ECGDrawElementCtrl Error: The component does not exist or the ID is wrong ";
 
                 this.DrawElementList.push(new ECGDrawElementClass(ElementInfo[i].MainWin));
-                
-                Index = this.DrawElementList.length-1;
 
+                console.log('DrawElementList',this.DrawElementList);
+
+                Index = this.DrawElementList.length-1;
+                console.log('Index',Index);
                 this.DrawElementList[Index].AddEventCallBack( ECGDrawElementClass.CallBackFuncID.ECGElementMouseMove, this.#CallBack_ECGEleMouseMove);
                 this.DrawElementList[Index].AddEventCallBack( ECGDrawElementClass.CallBackFuncID.WindowResize, this.#CallBack_WindowResize);
                 this.DrawElementList[Index].SetGridMode(ECGDrawElementCtrl.ObjGridMode.FixedGridQuantity_W, 14);
@@ -38,21 +43,30 @@ class ECGDrawElementCtrl{
                 this.DrawElementList[Index].SetDrawGridPara(GridColor,GridWidth);
                 this.DrawElementList[Index].SetDrawECGPara(ECGColor,ECGWidth);
                 this.DrawElementList[Index].DrawGrid();
-                //this.DrawElementList[Index].DrawECG();
 
-                this.DrawElementList[Index].StartDrawECG();
-
+            
+            // if(this.DrawElementList.length>0){
+            //     for(var run=0;run<5000;run++){
+            //         for(var i = 0 ;i<this.DrawElementList.length;i++){
+            //             this.DrawElementList[i].SetECGData(this.#ECGDataList[this.#ECGDataListIndex]);
+            //         }
+            //         this.#ECGDataListIndex =(this.#ECGDataListIndex+1) % this.#ECGDataList.length;
+            //     }
+            // }
+            
+                
+                //this.DrawElementList[Index].StartDrawECG();
+                
             }catch (e){
                 console.error(e);
             }
             
         }
 
-        if(this.DrawElementList.length>0){
+        /*if(this.DrawElementList.length>0){
             console.log('Start')
-            //this.DrawElementList[0].StartDrawECG();
             this.IntervalID = setInterval(this.#TestFunction, 10); 
-        }
+        }*/
         
     }
 
@@ -61,57 +75,96 @@ class ECGDrawElementCtrl{
         this.DrawElementList[0].SetECGData(Data);
     }
 
-    #TestFunction = ()=>{
-        try{
-            if(this.DrawElementList.length>0){
-                for(var run=0;run<5;run++){
-                    for(var i = 0 ;i<this.DrawElementList.length;i++){
-                        this.DrawElementList[i].SetECGData(this.#ECGDataList[this.#ECGDataListIndex]);
-                    }
-                    this.#ECGDataListIndex =(this.#ECGDataListIndex+1) % this.#ECGDataList.length;
-                }
+    // #TestFunction = ()=>{
+    //     try{
+    //         if(this.DrawElementList.length>0){
+    //             for(var run=0;run<5;run++){
+    //                 for(var i = 0 ;i<this.DrawElementList.length;i++){
+    //                     this.DrawElementList[i].SetECGData(this.#ECGDataList[this.#ECGDataListIndex]);
+    //                 }
+    //                 this.#ECGDataListIndex =(this.#ECGDataListIndex+1) % this.#ECGDataList.length;
+    //             }
+    //         }
+    //     }catch(err){
+    //         console.log(err);
+    //     }
+    // }
+
+    GetElementIDList = ()=>{
+        var ElementIdList = [];
+        for(var i = 0 ;i<this.DrawElementList.length;i++){
+            var ElementInfo = this.DrawElementList[i].WinId;
+            ElementIdList.push(this.DrawElementList[i].WinId);
+        }
+        return ElementIdList;
+    }
+
+    SetDrawMode(ElementId,ElementMode){
+        console.log('SetDrawMode(ElementId,ElementMode)',ElementMode);
+        for(var i = 0 ;i<this.DrawElementList.length;i++){
+            if(ElementId==null || this.DrawElementList[i].GetWinInfo().Id === ElementId){
+                this.DrawElementList[i].SetDrawMode(ElementMode);
             }
-        }catch(err){
-            console.log(err);
+        }
+        
+    }
+
+    SetECGData = (ElementId,Data)=>{
+        for(var i = 0 ;i<this.DrawElementList.length;i++){
+            if(ElementId==null || this.DrawElementList[i].GetWinInfo().Id === ElementId){
+                this.DrawElementList[i].SetECGData(Data);
+                //console.log('ElementId',this.DrawElementList[i].GetWinInfo().Id,'Data',Data);
+            }
         }
     }
 
-    SetGeidParameter = (GridColor,GridWidth,Setid=null)=>{
-        return new Promise((acc, rej) => {
-            if(this.DrawElementList.length<0){
-                rej(false);
+    StartDrawECG = (ElementId)=>{
+        for(var i = 0 ;i<this.DrawElementList.length;i++){
+            if(ElementId==null || this.DrawElementList[i].GetWinInfo().Id === ElementId){
+                this.DrawElementList[i].StartDrawECG();
             }
-                
-            for(var i = 0 ;i<this.DrawElementList.length;i++){
-                if(Setid==null || this.DrawElementList[i].GetWinInfo().Id === Setid){
-                    console.log('Setid',Setid);
-                    this.DrawElementList[Index].SetDrawGridPara(GridColor,GridWidth);
-                    this.DrawElementList[i].DrawGrid();
-
-                }
-            }
-            
-            acc(true);
-        });
+        }
+        
     }
-    SetGridSize = (GridSize,Setid=null)=>{
-        return new Promise((acc, rej) => {
-            if(this.DrawElementList.length<0){
-                rej(false);
-            }
-                
-            for(var i = 0 ;i<this.DrawElementList.length;i++){
-                if(Setid==null || this.DrawElementList[i].GetWinInfo().Id === Setid){
-                    console.log('Setid',Setid);
-                    this.DrawElementList[Index].SetGridSize(GridSize);
-                    this.DrawElementList[i].DrawGrid();
 
-                }
-            }
+
+    // SetGeidParameter = (GridColor,GridWidth,Setid=null)=>{
+    //     return new Promise((acc, rej) => {
+    //         if(this.DrawElementList.length<0){
+    //             rej(false);
+    //         }
+                
+    //         for(var i = 0 ;i<this.DrawElementList.length;i++){
+    //             if(Setid==null || this.DrawElementList[i].GetWinInfo().Id === Setid){
+    //                 console.log('Setid',Setid);
+    //                 this.DrawElementList[Index].SetDrawGridPara(GridColor,GridWidth);
+    //                 this.DrawElementList[i].DrawGrid();
+
+    //             }
+    //         }
             
-            acc(true);
-        });
-    }
+    //         acc(true);
+    //     });
+    // }
+
+    // SetGridSize = (GridSize,Setid=null)=>{
+    //     return new Promise((acc, rej) => {
+    //         if(this.DrawElementList.length<0){
+    //             rej(false);
+    //         }
+                
+    //         for(var i = 0 ;i<this.DrawElementList.length;i++){
+    //             if(Setid==null || this.DrawElementList[i].GetWinInfo().Id === Setid){
+    //                 console.log('Setid',Setid);
+    //                 this.DrawElementList[Index].SetGridSize(GridSize);
+    //                 this.DrawElementList[i].DrawGrid();
+
+    //             }
+    //         }
+            
+    //         acc(true);
+    //     });
+    // }
 
     #CallBack_ECGEleMouseMove = (id,postion)=>{
         return new Promise((acc, rej) => {
@@ -128,8 +181,6 @@ class ECGDrawElementCtrl{
     }
 
     #CallBack_WindowResize =(id,ElementInfo) => {
-
-
 
     }
 

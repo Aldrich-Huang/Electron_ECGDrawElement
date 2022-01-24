@@ -47,7 +47,7 @@ SetGridMode:
 */
 class ECGGridCanvasElement{
     static CallBackFuncID = {'WindowResize': 0, 'ECGElementMouseMove':1,'ECGElementMouseDown':2,'ECGElementMouseUp':3}
-    static ObjGridMode = {'FixedGridSize':10,'FixedGridQuantity_W':11, 'FixedGridQuantity_H':12}
+    static ObjGridMode = {'FixedGridSize':10,'FixedGridQuantity_W':11, 'FixedGridQuantity_H':12,'d':20,'C':21}
 
     #Canvas_Info = {'Color': '#999999', 'LineWidth': 1,'GridMode': ECGGridCanvasElement.ObjGridMode.FixedGridSize, 'smGridSize': 5, 'GridQuantity':-1};
 
@@ -125,12 +125,19 @@ class ECGGridCanvasElement{
 
         this.#Elementctx.beginPath();
 
-
+        // grid Point
         for(let x = this.#Canvas_Info.smGridSize; x <= this.#Element.width; x += this.#Canvas_Info.smGridSize){
-            for(let y = this.#Canvas_Info.smGridSize; y <= this.#Element.height; y += this.#Canvas_Info.smGridSize){
+            //Top
+            for(let y = this.#Element.height/2; y > 0; y -= this.#Canvas_Info.smGridSize){
                 this.#Elementctx.strokeRect(x,y,1,1);
                 this.#Elementctx.stroke();
             }
+            //Botton
+            for(let y = this.#Element.height/2; y <= this.#Element.height; y += this.#Canvas_Info.smGridSize){
+                this.#Elementctx.strokeRect(x,y,1,1);
+                this.#Elementctx.stroke();
+            }
+            
         }
         this.#Elementctx.closePath();
 
@@ -140,7 +147,14 @@ class ECGGridCanvasElement{
             this.#Elementctx.lineTo(x,this.#Element.height+.5);
             this.#Elementctx.stroke();
         }
-        for(let y = 0; y <= this.#Element.height; y += this.#Canvas_Info.smGridSize*5){
+        
+        for(let y = this.#Element.height/2; y <= this.#Element.height; y += this.#Canvas_Info.smGridSize*5){
+            this.#Elementctx.moveTo(0,y+0.5);
+            this.#Elementctx.lineTo(this.#Element.width,y+0.5);
+            this.#Elementctx.stroke();
+        }
+
+        for(let y = this.#Element.height/2; y > 0; y -= this.#Canvas_Info.smGridSize*5){
             this.#Elementctx.moveTo(0,y+0.5);
             this.#Elementctx.lineTo(this.#Element.width,y+0.5);
             this.#Elementctx.stroke();

@@ -82,30 +82,52 @@ class ECGDataRegister{
             if(this.#OutputIndex + this.#DataSpace >= this.#DataList.length){
                 if(this.#OutputIndex + this.#DataSpace >= this.#InputIndex + this.#DataList.length){
                     //console.error('this.#OutputIndex + this.#DataSpace >= this.#InputIndex + this.#DataList.length');
-                    return -1;
+                    return {'state':false,'ECGData':-1};
                 }
                 if(this.#InputOverflow <= 0){
                     //console.error('this.#InputOverflow <= 0');
-                    return -1;
+                    return {'state':false,'ECGData':-2};
                 }
                 this.#InputOverflow = false;
                 //console.error('GetData: ',this.#InputOverflow)
             }
             //console.log('InputIndex: ',this.#InputIndex,', OutputIndex: ',this.#OutputIndex,', DataSpace: ',this.#DataSpace);
             this.#OutputIndex = (this.#OutputIndex + this.#DataSpace) % this.#DataList.length;
-            return this.#DataList[this.#OutputIndex];
+            return {'state':true,'ECGData':this.#DataList[this.#OutputIndex]};
 
         }else{
             if(this.#OutputIndex + this.#DataSpace >= this.#InputIndex){
-                return -1;
+                return {'state':false,'ECGData':-3};
             }
-            
+            //console.log('InputIndex: ',this.#InputIndex,', OutputIndex: ',this.#OutputIndex,', DataSpace: ',this.#DataSpace);
             this.#OutputIndex = (this.#OutputIndex + this.#DataSpace) % this.#DataList.length;
-            return this.#DataList[this.#OutputIndex];
+            return {'state':true,'ECGData':this.#DataList[this.#OutputIndex]};
         }
 
     }
 
+    GetDatas = (Quantity)=>{
+        var ECGDataList = [];
+        
+        for(var indx = (this.#InputIndex + 1)-Quantity, Stop = this.#InputIndex; indx != Stop; indx = (indx + 1)% this.#DataList.length){
+            ECGDataList.push(this.#DataList[indx]);
+        }
+        return ECGDataList;
+    }
+
+    //-----
+    Resize(NewSize){
+        if(NewSize>this.GetSize()){
+            while(NewSize > this.GetSize())
+                this.#DataList.push(defaultValue);
+        }else if(NewSize < this.GetSize()){
+            this.#DataList.length = NewSize;
+        }
+
+        this.#InputIndex = -1;
+        this.#InputOverflow = false;
+        this.#OutputIndex = -1;
+    }
 }
 
 module.exports = {
