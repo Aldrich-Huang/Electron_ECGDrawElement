@@ -47,9 +47,9 @@ SetGridMode:
 */
 class ECGGridCanvasElement{
     static CallBackFuncID = {'WindowResize': 0, 'ECGElementMouseMove':1,'ECGElementMouseDown':2,'ECGElementMouseUp':3}
-    static ObjGridMode = {'FixedGridSize':10,'FixedGridQuantity_W':11, 'FixedGridQuantity_H':12,'d':20,'C':21}
+    static ObjGridMode = {'FixedGridSize':10,'FixedGridQuantity_W':11, 'FixedGridQuantity_H':12}
 
-    #Canvas_Info = {'Color': '#999999', 'LineWidth': 1,'GridMode': ECGGridCanvasElement.ObjGridMode.FixedGridSize, 'smGridSize': 5, 'GridQuantity':-1};
+    #Canvas_Info = {'Color': '#999999', 'LineWidth': 1,'TitleTextColor':'#ffffff','TitleTextSize':'25px','TitleTextFont':'Century','Title':'I','TitleDistance_X':0.5,'TitleDistance_Y':1,'GridMode': ECGGridCanvasElement.ObjGridMode.FixedGridSize, 'smGridSize': 5, 'GridQuantity':-1};
 
     #Element;
     #Elementctx;
@@ -73,7 +73,7 @@ class ECGGridCanvasElement{
             case ECGGridCanvasElement.ObjGridMode.FixedGridQuantity_W:
                 this.#Canvas_Info.GridMode=gridmode;
                 this.#Canvas_Info.GridQuantity=value;
-                this.#Canvas_Info.smGridSize=(this.#Element.width/this.#Canvas_Info.GridQuantity)/5;
+                this.#Canvas_Info.smGridSize=(this.#Element.width/(this.#Canvas_Info.GridQuantity+0.6))/5;
             break;
             case ECGGridCanvasElement.ObjGridMode.FixedGridQuantity_H:
                 this.#Canvas_Info.GridMode=gridmode;
@@ -87,9 +87,11 @@ class ECGGridCanvasElement{
     }
 
     SetCanvasSize = (Width, Height) => {
+        this.#Elementctx.translate(0,0);
+        
         this.#Element.width  = Width;
         this.#Element.height = Height;
-        console.log('this.#Canvas_Info.GridMode',this.#Canvas_Info.GridMode);
+        console.log('SetCanvasSize',this.#Element.width,this.#Element.height);
         switch(this.#Canvas_Info.GridMode){
             case ECGGridCanvasElement.ObjGridMode.FixedGridQuantity_W:
                 this.#Canvas_Info.smGridSize=(this.#Element.width/this.#Canvas_Info.GridQuantity)/5;
@@ -103,6 +105,18 @@ class ECGGridCanvasElement{
     SetDrawLinePara = (LineColor, LineWidth) => {
         this.#Canvas_Info.Color = LineColor;
         this.#Canvas_Info.LineWidth = LineWidth;
+    }
+
+    SetDrawTitleTextPara = (textcolor, textsize, textfont,distance_x,distance_y) => {
+        this.#Canvas_Info.TitleTextColor = textcolor;
+        this.#Canvas_Info.TitleTextSize = textsize;
+        this.#Canvas_Info.TitleTextFont = textfont;
+        this.#Canvas_Info.TitleDistance_X = distance_x;
+        this.#Canvas_Info.TitleDistance_Y = distance_y;
+    }
+
+    SetTitleText=(title)=>{
+        this.#Canvas_Info.Title = title;
     }
     
     AddEventCallBack = (CallBackMode, CallBackFunc) => {
@@ -120,11 +134,11 @@ class ECGGridCanvasElement{
     Draw = ()=>{
         this.#Elementctx.strokeStyle = this.#Canvas_Info.Color;
         this.#Elementctx.lineWidth = this.#Canvas_Info.LineWidth;
-
+        
         this.ClearView();
 
         this.#Elementctx.beginPath();
-
+        
         // grid Point
         for(let x = this.#Canvas_Info.smGridSize; x <= this.#Element.width; x += this.#Canvas_Info.smGridSize){
             //Top
@@ -142,7 +156,7 @@ class ECGGridCanvasElement{
         this.#Elementctx.closePath();
 
         this.#Elementctx.beginPath();
-        for(let x = 0; x <= this.#Element.width; x += this.#Canvas_Info.smGridSize*5){
+        for(let x = this.#Canvas_Info.smGridSize*3; x <= this.#Element.width; x += this.#Canvas_Info.smGridSize*5){
             this.#Elementctx.moveTo(x,0.5);
             this.#Elementctx.lineTo(x,this.#Element.height+.5);
             this.#Elementctx.stroke();
@@ -159,7 +173,32 @@ class ECGGridCanvasElement{
             this.#Elementctx.lineTo(this.#Element.width,y+0.5);
             this.#Elementctx.stroke();
         }
+
         this.#Elementctx.closePath();
+
+        this.#Elementctx.fillStyle = "#00c100";
+    
+        this.symbleUnit = Math.floor(this.#Canvas_Info.smGridSize/2);
+        this.#Elementctx.fillRect(this.symbleUnit, this.#Element.height/2, this.symbleUnit * 2, this.symbleUnit * -1);
+        this.#Elementctx.fillRect(this.symbleUnit * 2, this.#Element.height/2 , this.symbleUnit * 1, this.#Canvas_Info.smGridSize * -1 * 10);
+        this.#Elementctx.fillRect(this.symbleUnit * 2, this.#Element.height/2 - this.#Canvas_Info.smGridSize * 9.5 , this.symbleUnit * 3, this.symbleUnit * -1);
+        this.#Elementctx.fillRect(this.symbleUnit * 4, this.#Element.height/2 - (this.#Canvas_Info.smGridSize * 10), this.symbleUnit * 1, this.#Canvas_Info.smGridSize * 10);
+        this.#Elementctx.fillRect(this.symbleUnit * 4, this.#Element.height/2, this.symbleUnit * 2, this.symbleUnit * -1);
+
+
+        this.#Elementctx.font = 'Bold '+this.#Canvas_Info.smGridSize*1.2 + 'px Arial'
+        this.#Elementctx.fillStyle="#00c100"
+        this.#Elementctx.textAlign = "left";
+        this.#Elementctx.textBaseline = "top";
+        this.#Elementctx.fillText('1mv', this.symbleUnit , this.#Element.height/2 + this.symbleUnit)
+
+
+        this.#Elementctx.font = this.#Canvas_Info.TitleTextSize+' '+this.#Canvas_Info.TitleTextFont
+        this.#Elementctx.fillStyle=this.#Canvas_Info.TitleTextColor
+        this.#Elementctx.textAlign = "left";
+        this.#Elementctx.textBaseline = "top";
+        
+        this.#Elementctx.fillText(this.#Canvas_Info.Title, Math.round(this.#Canvas_Info.smGridSize * this.#Canvas_Info.TitleDistance_X), Math.round(this.#Canvas_Info.smGridSize * this.#Canvas_Info.TitleDistance_Y))  //填滿文字
     }
 
     ClearView = () => {

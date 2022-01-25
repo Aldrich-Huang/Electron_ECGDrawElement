@@ -39,6 +39,8 @@ var ECGDataList = [];
 var ECGDataListIndex = 0;
 var arr = dataSource.split(' ');
 
+var ECGBUF=0;
+
 for (let i = 0, buf; i < 5000; i++) {
     buf = i % arr.length;
     ECGDataList.push(arr[buf]*1);
@@ -55,8 +57,24 @@ var ElementIdList =  DrawECGWindowCtrler.GetElementIDList()
 
 // for(var run=0;run<5000;run++){
 //     for(var i = 0 ;i<this.ElementIdList.length;i++){
-//       DrawECGWindowCtrler.SetECGData(ElementIdList[i],ECGDataList[run]);
+//       DrawECGWindowCtrler.SetECGData(ElementIdList[i],ECGBUF);
 //     }
+//     ECGDataListIndex =(ECGDataListIndex+1) % ECGDataList.length;
+//               if(ECGDataListIndex % 1000 ===0){
+//                 ECGBUF=10;
+//               }
+//               if(ECGDataListIndex % 2000 ===0){
+//                 ECGBUF=20;
+//               }
+//               if(ECGDataListIndex % 3000 ===0){
+//                 ECGBUF=30;
+//               }
+//               if(ECGDataListIndex % 4000 ===0){
+//                 ECGBUF=40;
+//               }
+//               if(ECGDataListIndex % 5000 ===0){
+//                 ECGBUF=0;
+//               }
 // }
 
 
@@ -66,12 +84,25 @@ TestFunction = ()=>{
       if(ElementIdList.length>0){
           for(var run=0;run<5;run++){
               for(var i = 0 ;i<ElementIdList.length;i++){
-                DrawECGWindowCtrler.SetECGData(ElementIdList[i],ECGDataList[ECGDataListIndex]);
+                DrawECGWindowCtrler.SetECGData(ElementIdList[i],ECGBUF);
                 
               }
-              console.log(ElementIdList[i],ECGDataList[ECGDataListIndex]);
               ECGDataListIndex =(ECGDataListIndex+1) % ECGDataList.length;
-              
+              if(ECGDataListIndex % 1000 ===0){
+                ECGBUF=10;
+              }
+              if(ECGDataListIndex % 2000 ===0){
+                ECGBUF=20;
+              }
+              if(ECGDataListIndex % 3000 ===0){
+                ECGBUF=30;
+              }
+              if(ECGDataListIndex % 4000 ===0){
+                ECGBUF=40;
+              }
+              if(ECGDataListIndex % 5000 ===0){
+                ECGBUF=0;
+              }
           }
       }
   }catch(err){

@@ -13,7 +13,7 @@ const ECGDataRegisterClass = require('./ECGDataRegister.js').ECGDataRegister;
 class ECGCanvasElement{
     static CallBackFuncID = {'WindowResize': 0, 'ECGElementMouseMove':1,'ECGElementMouseDown':2,'ECGElementMouseUp':3}
     static ObjGainItem = {'Gain_0.5':0.5,'Gain_1.0':1.0,'Gain_2.0':2.0,'Gain_4.0':4.0}; 
-    static #ConstData = {'TimeUnit':0.04, 'VoltageUnit':0.1}
+    static #ConstData = {'TimeUnit':0.2, 'VoltageUnit':0.1}
     #Canvas_Info = {'Color': '#00c100', 'LineWidth': 1,'smGridSize': 5,'ECGQuantity_Sec':500,'ECGData_Sec':10,'Gain':ECGCanvasElement.ObjGainItem['Gain_1.0']};
     
     #Element;
@@ -22,6 +22,7 @@ class ECGCanvasElement{
     #ECGIntervalID
 
     #DrawECGIndex = 0;
+    #CounterIndex = -1;
     #NowEcgData=0;
     #PreEcgData=0;
 
@@ -44,7 +45,7 @@ class ECGCanvasElement{
     }
 
     SetCanvasSize = (Width, Height) => {
-        console.log('ECGCanvasElement.SetCanvasSize',Width,Height);
+
         this.#Element.width  = Width;
         this.#Element.height = Height;
         
@@ -76,6 +77,7 @@ class ECGCanvasElement{
 
     SetsmGridSize = (smGridSize)=>{
         this.#Canvas_Info.smGridSize = smGridSize;
+
     }
 
     SetDrawLinePara = (LineColor, LineWidth) => {
@@ -99,8 +101,8 @@ class ECGCanvasElement{
     }
 
     #DynamicDrawECG = ()=>{
-        var DrawRange =Math.floor( this.#ECGDataRegister.GetSize() / this.#Element.width);
-        this.#ECGDataRegister.SetDateSpace(DrawRange);
+        var DrawRange =(this.#Canvas_Info.ECGQuantity_Sec *ECGCanvasElement.#ConstData.TimeUnit)/this.#Canvas_Info.smGridSize;// this.#ECGDataRegister.GetSize() / this.#Element.width;
+        var indx = Math.floor(this.#DrawECGIndex*DrawRange);
 
         this.#Elementctx.strokeStyle = this.#Canvas_Info.Color;
         this.#Elementctx.lineWidth = this.#Canvas_Info.LineWidth;
@@ -109,22 +111,32 @@ class ECGCanvasElement{
             this.#NowEcgData = this.#ECGDataRegister.GetData();
             
             if(this.#NowEcgData.state){
-                this.#Elementctx.beginPath();
-                //0.01是模擬mV
-                this.#NowEcgData_smGrid = Math.floor((this.#NowEcgData.ECGData *0.01 / (ECGCanvasElement.#ConstData.VoltageUnit * this.#Canvas_Info.Gain))*(this.#Canvas_Info.smGridSize));
 
-                this.#Elementctx.clearRect(this.#DrawECGIndex, 0, 25, this.#Element.height)
+                if((this.#CounterIndex)===indx){
+                    this.#Elementctx.beginPath();
+                    //0.01是模擬mV
+                    this.#NowEcgData_smGrid = Math.floor((this.#NowEcgData.ECGData *0.01 / (ECGCanvasElement.#ConstData.VoltageUnit / this.#Canvas_Info.Gain))*(this.#Canvas_Info.smGridSize));
+    
+                    this.#Elementctx.clearRect(this.#Canvas_Info.smGridSize * 3+this.#DrawECGIndex, 0, 25, this.#Element.height)
+    
+                    this.#Elementctx.moveTo(this.#Canvas_Info.smGridSize * 3+this.#DrawECGIndex-1, (this.#Element.height/2) + this.#PreEcgData_smGrid );
+                    this.#Elementctx.lineTo(this.#Canvas_Info.smGridSize * 3+this.#DrawECGIndex, (this.#Element.height/2) + this.#NowEcgData_smGrid );
+    
+                    this.#DrawECGIndex = this.#DrawECGIndex + 1;
+                    
+                    if(this.#DrawECGIndex+this.#Canvas_Info.smGridSize * 3 >= this.#Element.width){
+                        this.ResetIndex();
+                    }
+                    this.#PreEcgData_smGrid = this.#NowEcgData_smGrid;
+                    //this.#PreEcgData = this.#NowEcgData;
+    
+                    this.#Elementctx.stroke();
+                    this.#Elementctx.closePath();
 
-                this.#Elementctx.moveTo(this.#DrawECGIndex-1, (this.#Element.height/2) + this.#PreEcgData_smGrid );
-                this.#Elementctx.lineTo(this.#DrawECGIndex, (this.#Element.height/2) + this.#NowEcgData_smGrid );
-
-                this.#DrawECGIndex = (this.#DrawECGIndex + 1) % this.#Element.width;
-                
-                this.#PreEcgData_smGrid = this.#NowEcgData_smGrid;
-                //this.#PreEcgData = this.#NowEcgData;
-
-                this.#Elementctx.stroke();
-                this.#Elementctx.closePath();
+                    indx = Math.floor(this.#DrawECGIndex * DrawRange);
+                    
+                }
+                this.#CounterIndex +=1;
             }
         }while(this.#NowEcgData.state);
     }
@@ -142,7 +154,7 @@ class ECGCanvasElement{
             this.#Elementctx.beginPath();
 
             //0.01是模擬mV
-            this.#NowEcgData_smGrid = Math.floor((ECGDataBuf[indx] *0.01 / (ECGCanvasElement.#ConstData.VoltageUnit * this.#Canvas_Info.Gain))*(this.#Canvas_Info.smGridSize));
+            this.#NowEcgData_smGrid = Math.floor((ECGDataBuf[indx] *0.01 / (ECGCanvasElement.#ConstData.VoltageUnit / this.#Canvas_Info.Gain))*(this.#Canvas_Info.smGridSize));
 
             this.#Elementctx.moveTo(this.#DrawECGIndex-1, (this.#Element.height/2) + this.#PreEcgData_smGrid);
             this.#Elementctx.lineTo(this.#DrawECGIndex, (this.#Element.height/2) + this.#NowEcgData_smGrid);
@@ -203,6 +215,7 @@ class ECGCanvasElement{
 
     ResetIndex(){
         this.#DrawECGIndex = 0;
+        this.#CounterIndex = -1;
     }
 
     SetGainInfo = (gain) =>{
@@ -211,7 +224,7 @@ class ECGCanvasElement{
             case ECGCanvasElement.ObjGainItem['Gain_1.0']:
             case ECGCanvasElement.ObjGainItem['Gain_2.0']:
             case ECGCanvasElement.ObjGainItem['Gain_4.0']:
-                ECGCanvasElement.#Canvas_Info.Gain = gain;
+                this.#Canvas_Info.Gain = gain;
                 break;
             default:
                 return false;

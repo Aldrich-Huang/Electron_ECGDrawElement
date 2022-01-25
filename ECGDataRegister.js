@@ -47,12 +47,9 @@ class ECGDataRegister{
         this.#InputIndex = -1;
         this.#InputOverflow = false;
         this.#OutputIndex = -1;
-        this.#DataSpace = 1;
     }
 
-    SetDateSpace(Space){
-        this.#DataSpace = Space;
-    }
+
 
     GetSize = ()=>{
         return this.#DataList.length;
@@ -77,31 +74,32 @@ class ECGDataRegister{
     }
 
     GetData(){
+        var Result = {'state':false,'Index': -1,'ECGData':-1}
         if(this.#InputOverflow){
-            //console.log(this.#OutputIndex + this.#DataSpace,this.#InputIndex + this.#DataList.length);
-            if(this.#OutputIndex + this.#DataSpace >= this.#DataList.length){
-                if(this.#OutputIndex + this.#DataSpace >= this.#InputIndex + this.#DataList.length){
-                    //console.error('this.#OutputIndex + this.#DataSpace >= this.#InputIndex + this.#DataList.length');
-                    return {'state':false,'ECGData':-1};
+            if(this.#OutputIndex + 1 >= this.#DataList.length){
+                if(this.#OutputIndex + 1 >= this.#InputIndex + this.#DataList.length){
+                    return Result;
                 }
                 if(this.#InputOverflow <= 0){
-                    //console.error('this.#InputOverflow <= 0');
-                    return {'state':false,'ECGData':-2};
+                    return Result;
                 }
                 this.#InputOverflow = false;
-                //console.error('GetData: ',this.#InputOverflow)
             }
-            //console.log('InputIndex: ',this.#InputIndex,', OutputIndex: ',this.#OutputIndex,', DataSpace: ',this.#DataSpace);
-            this.#OutputIndex = (this.#OutputIndex + this.#DataSpace) % this.#DataList.length;
-            return {'state':true,'ECGData':this.#DataList[this.#OutputIndex]};
+            Result.state = true;
+            Result.Index = this.#OutputIndex;
+            Result.ECGData = this.#DataList[this.#OutputIndex];
+            this.#OutputIndex = (this.#OutputIndex + 1) % this.#DataList.length;
+            return Result;
 
         }else{
-            if(this.#OutputIndex + this.#DataSpace >= this.#InputIndex){
-                return {'state':false,'ECGData':-3};
+            if(this.#OutputIndex + 1 >= this.#InputIndex){
+                return Result;
             }
-            //console.log('InputIndex: ',this.#InputIndex,', OutputIndex: ',this.#OutputIndex,', DataSpace: ',this.#DataSpace);
-            this.#OutputIndex = (this.#OutputIndex + this.#DataSpace) % this.#DataList.length;
-            return {'state':true,'ECGData':this.#DataList[this.#OutputIndex]};
+            Result.state = true;
+            Result.Index = this.#OutputIndex;
+            Result.ECGData = this.#DataList[this.#OutputIndex];
+            this.#OutputIndex = (this.#OutputIndex + 1) % this.#DataList.length;
+            return Result;
         }
 
     }

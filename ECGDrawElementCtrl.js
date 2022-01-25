@@ -4,7 +4,7 @@ const ECGDrawElementClass = require('./ECGDrawElement.js').ECGDrawElement;
 class ECGDrawElementCtrl{
     static ObjGridMode = {'FixedGridSize': ECGDrawElementClass.ObjGridMode.FixedGridSize,
                         'FixedGridQuantity_W': ECGDrawElementClass.ObjGridMode.FixedGridQuantity_W}
-                        
+
     static ObjElementMode = ECGDrawElementClass.ObjElementMode;
     
     DrawElementList=[];
@@ -32,18 +32,15 @@ class ECGDrawElementCtrl{
 
                 this.DrawElementList.push(new ECGDrawElementClass(ElementInfo[i].MainWin));
 
-                console.log('DrawElementList',this.DrawElementList);
-
                 Index = this.DrawElementList.length-1;
-                console.log('Index',Index);
                 this.DrawElementList[Index].AddEventCallBack( ECGDrawElementClass.CallBackFuncID.ECGElementMouseMove, this.#CallBack_ECGEleMouseMove);
                 this.DrawElementList[Index].AddEventCallBack( ECGDrawElementClass.CallBackFuncID.WindowResize, this.#CallBack_WindowResize);
-                this.DrawElementList[Index].SetGridMode(ECGDrawElementCtrl.ObjGridMode.FixedGridQuantity_W, 14);
+                this.DrawElementList[Index].SetGridMode(ECGDrawElementCtrl.ObjGridMode.FixedGridQuantity_W, 10);
                 //this.DrawElementList[Index].SetECGShowSec(10);
                 this.DrawElementList[Index].SetDrawGridPara(GridColor,GridWidth);
                 this.DrawElementList[Index].SetDrawECGPara(ECGColor,ECGWidth);
                 this.DrawElementList[Index].DrawGrid();
-
+                //this.DrawElementList[Index].SetGain(ECGDrawElementClass.ObjGainItem['Gain_4.0']);
             
             // if(this.DrawElementList.length>0){
             //     for(var run=0;run<5000;run++){
@@ -100,7 +97,6 @@ class ECGDrawElementCtrl{
     }
 
     SetDrawMode(ElementId,ElementMode){
-        console.log('SetDrawMode(ElementId,ElementMode)',ElementMode);
         for(var i = 0 ;i<this.DrawElementList.length;i++){
             if(ElementId==null || this.DrawElementList[i].GetWinInfo().Id === ElementId){
                 this.DrawElementList[i].SetDrawMode(ElementMode);

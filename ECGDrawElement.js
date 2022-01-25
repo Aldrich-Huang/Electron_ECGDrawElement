@@ -193,7 +193,7 @@ class ECGDrawElement{
             case ECGDrawElement.ObjGainItem['Gain_1.0']:
             case ECGDrawElement.ObjGainItem['Gain_2.0']:
             case ECGDrawElement.ObjGainItem['Gain_4.0']:
-                return ECGCanvasElementClass.SetGainInfo(gain);
+                return this.#oECGCanvasElement.SetGainInfo(gain);
                 break;
             default:
                 return false;
@@ -208,15 +208,13 @@ class ECGDrawElement{
         switch(ElementMode){
             case ECGDrawElement.ObjElementMode.Dynamic_DrawingECG:          
                 this.#Element_Info.Mode = ElementMode;  
-                this.#oECGCanvasElement.SetCanvasSize(this.WinWidth, this.WinHeight); 
-                console.log('SetDrawMode','ECGDrawElement.ObjElementMode.Dynamic_DrawingECG');       
+                this.#oECGCanvasElement.SetCanvasSize(this.WinWidth, this.WinHeight);      
                 break;
             case ECGDrawElement.ObjElementMode.Static_DrawingECG:           
                 this.#Element_Info.Mode = ElementMode;    
                 var ECGElementInfo = this.#oECGCanvasElement.GetCanvasInfo();
                 var GridElementInfo = this.#ObjGridElement.GetCanvasInfo();
-                console.log('SetDrawMode','ECGDrawElement.ObjElementMode.Static_DrawingECG');    
-                this.#oECGCanvasElement.SetCanvasSize(ECGElementInfo.ECGData_Sec * (GridElementInfo.smGridSize * 5 * 2), this.WinHeight);      
+                this.#oECGCanvasElement.SetCanvasSize(ECGElementInfo.ECGData_Sec * (GridElementInfo.smGridSize * 5 * 2) /*+ GridElementInfo.smGridSize*3*/, this.WinHeight);      
                 break;
             default:                                                        
                 return false;
@@ -230,12 +228,12 @@ class ECGDrawElement{
     }
 
     StartDrawECG = () => {
-        console.log('GetDrawMode',this.GetDrawMode());
+        // console.log('GetDrawMode',this.GetDrawMode());
         if(this.GetDrawMode() === ECGDrawElement.ObjElementMode.Static_DrawingECG){
-            console.log('Static');
+            // console.log('Static');
             this.#oECGCanvasElement.StaticDrawECG();
         }else{
-            console.log('Dynamic')
+            //console.log('Dynamic')
             this.#oECGCanvasElement.StartDynamicDrawECG(10);
         }
 
@@ -262,12 +260,10 @@ class ECGDrawElement{
             this.WinHeight = this.WinElement.offsetHeight;
             
             
-
-
             if(this.#CallBackFunList[ECGDrawElement.CallBackFuncID.WindowResize]!=undefined){
                 this.#CallBackFunList[ECGDrawElement.CallBackFuncID.WindowResize](this.WinElement.id,this.GetWinInfo());
             }
-
+            this.ClearGrid();
             this.#ObjGridElement.SetCanvasSize(this.WinWidth,this.WinHeight);
             this.DrawGrid();
             
@@ -282,13 +278,13 @@ class ECGDrawElement{
                     this.#oECGCanvasElement.SetCanvasSize(this.WinWidth, this.WinHeight);        
                     break;
                 case ECGDrawElement.ObjElementMode.Static_DrawingECG:
-                    this.#oECGCanvasElement.SetCanvasSize(ECGElementInfo.ECGData_Sec * (GridElementInfo.smGridSize * 5 * 2), this.WinHeight);      
+                    this.#oECGCanvasElement.SetCanvasSize(ECGElementInfo.ECGData_Sec * (GridElementInfo.smGridSize * 5 * 2) /*+ GridElementInfo.smGridSize*3*/, this.WinHeight);      
                     break;
             }
 
             this.#oECGCanvasElement.SetsmGridSize(GridElementInfo.smGridSize);
 
-            this.#oECGCanvasElement.ResetIndex();
+            //this.#oECGCanvasElement.ResetIndex();
             this.StartDrawECG();
             
         }
@@ -335,7 +331,7 @@ class ECGDrawElement{
     }
     
     #ECGElementMouseDown = (event) => {
-        //console.log(event.pageX, event.pageY);
+        console.log(event.pageX, event.pageY);
         this.Clicked = true;
         if(this.#CallBackFunList[ECGDrawElement.CallBackFuncID.ECGElementMouseDown]!=undefined){
             this.#CallBackFunList[ECGDrawElement.CallBackFuncID.ECGElementMouseDown](this.WinElement.id,this.GetWinPosition());
