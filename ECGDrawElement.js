@@ -27,7 +27,9 @@ class ECGDrawElement{
     static ObjElementMode = {'Dynamic_DrawingECG':50,'Static_DrawingECG': 51};
     static ObjGainItem = ECGCanvasElementClass.ObjGainItem;
     
+    #DataAndGridInfo={'WinTotleSec':10,'WinTotlemV':6,'smGrid_mV':0.2,'smGrid_Time':0.1}
 
+    
     Clicked = false;
     WinWidth = 200;
     WinHeight = 200;
@@ -69,19 +71,20 @@ class ECGDrawElement{
         //Build draw ECG grid class
         this.#ObjGridElement = new ECGGridCanvasElementClass(gridelementid);
         this.#ObjGridElement.SetCanvasSize(this.WinWidth, this.WinHeight);
+        var WidthGridQuantity = this.#DataAndGridInfo.WinTotleSec/this.#DataAndGridInfo.smGrid_Time;
+        console.log('WidthGridQuantity',WidthGridQuantity)
+        this.#ObjGridElement.SetsmGridSize((this.WinWidth/(WidthGridQuantity+0.6))/5);
 
 
         //Build draw ECG class
         this.#oECGCanvasElement = new ECGCanvasElementClass(ecgelementid);
         this.SetDrawMode(ECGElementDrawMode);
-
+        this.#oECGCanvasElement.SetConstData(this.#DataAndGridInfo.smGrid_Time,this.#DataAndGridInfo.smGrid_mV);
+        this.#oECGCanvasElement.SetsmGridSize((this.WinWidth/(WidthGridQuantity+0.6))/5);
 
         this.#oECGCanvasElement.AddEventCallBack(ECGCanvasElementClass.CallBackFuncID.ECGElementMouseMove, this.#ECGElementMouseMove);
         this.#oECGCanvasElement.AddEventCallBack(ECGCanvasElementClass.CallBackFuncID.ECGElementMouseDown, this.#ECGElementMouseDown);
         
-
-
-
 
         window.addEventListener('resize', this.#WinElementResize);
         //-----------------------------------
@@ -94,18 +97,35 @@ class ECGDrawElement{
         
     }
 
-    
+    SetCanvasPara(Sec,mV,smSec,smmV){
+        this.#DataAndGridInfo.WinTotleSec = Sec
+        this.#DataAndGridInfo.WinTotlemV = mV
+        this.#DataAndGridInfo.smGrid_Time = smSec
+        this.#DataAndGridInfo.smGrid_mV = smmV
 
-    
+        var WidthGridQuantity = this.#DataAndGridInfo.WinTotleSec/(this.#DataAndGridInfo.smGrid_Time*5);
+        console.log('WidthGridQuantity',WidthGridQuantity)
+        this.#ObjGridElement.SetsmGridSize((this.WinWidth/(WidthGridQuantity+0.6))/5);
+        this.#ObjGridElement.SetSymmVText(this.#DataAndGridInfo.smGrid_mV * 10);
+        if(ECGDrawElement.ObjElementMode.Static_DrawingECG){
+            var ECGElementInfo = this.#oECGCanvasElement.GetCanvasInfo();
+            var GridElementInfo = this.#ObjGridElement.GetCanvasInfo();
+            this.#oECGCanvasElement.SetCanvasSize(ECGElementInfo.ECGData_Sec / this.#DataAndGridInfo.smGrid_Time * GridElementInfo.smGridSize + GridElementInfo.smGridSize * 3 , this.WinHeight);     
+            console.log('TT',ECGElementInfo.ECGData_Sec,this.#DataAndGridInfo.smGrid_Time,GridElementInfo.smGridSize) 
+        }
 
+
+        this.#oECGCanvasElement.SetConstData(this.#DataAndGridInfo.smGrid_Time,this.#DataAndGridInfo.smGrid_mV);
+        this.#oECGCanvasElement.SetsmGridSize((this.WinWidth/(WidthGridQuantity+0.6))/5);
+    }
 
     SetGridMode = (gridmode, value)=>{
-        if(!this.#ObjGridElement.SetGridMode(gridmode, value))
+        /*if(!this.#ObjGridElement.SetGridMode(gridmode, value))
             return false;
         var ECGElementInfo = this.#ObjGridElement.GetCanvasInfo();
         console.log('ECGElementInfo.smGridSize',ECGElementInfo.smGridSize);
         this.#oECGCanvasElement.SetsmGridSize(ECGElementInfo.smGridSize);
-        return true;
+        return true;*/
     }
 
     SetDrawGridPara = (linecolor, linewidth)=>{
@@ -126,17 +146,6 @@ class ECGDrawElement{
         this.#oECGCanvasElement.SetDrawLinePara(ECGLineColor,ECGLineWidth);
     }
 
-
-    SetECGShowSec = (sec)=>{
-        // if(sec>5){
-        //     this.#Canvas_ECGInfo.GridShowSec=sec;
-        //     this.ECGElement.width  = (this.#Canvas_GridInfo.smGridSize * 5 * 2) * this.#Canvas_ECGInfo.GridShowSec;
-        // }else{
-        //     this.ECGElement.width  = this.WinWidth;
-        //     this.#Canvas_ECGInfo.GridShowSec=-1;
-        // }
-
-    }
 
     ClearECG=()=>{
         this.#oECGCanvasElement.ClearView();
@@ -214,7 +223,7 @@ class ECGDrawElement{
                 this.#Element_Info.Mode = ElementMode;    
                 var ECGElementInfo = this.#oECGCanvasElement.GetCanvasInfo();
                 var GridElementInfo = this.#ObjGridElement.GetCanvasInfo();
-                this.#oECGCanvasElement.SetCanvasSize(ECGElementInfo.ECGData_Sec * (GridElementInfo.smGridSize * 5 * 2) /*+ GridElementInfo.smGridSize*3*/, this.WinHeight);      
+                this.#oECGCanvasElement.SetCanvasSize(ECGElementInfo.ECGData_Sec / this.#DataAndGridInfo.smGrid_Time * GridElementInfo.smGridSize + GridElementInfo.smGridSize * 3, this.WinHeight);
                 break;
             default:                                                        
                 return false;
@@ -265,6 +274,10 @@ class ECGDrawElement{
             }
             this.ClearGrid();
             this.#ObjGridElement.SetCanvasSize(this.WinWidth,this.WinHeight);
+
+            var WidthGridQuantity = this.#DataAndGridInfo.WinTotleSec/(this.#DataAndGridInfo.smGrid_Time * 5);
+            this.#ObjGridElement.SetsmGridSize((this.WinWidth/(WidthGridQuantity+0.6))/5);
+
             this.DrawGrid();
             
 
@@ -278,13 +291,13 @@ class ECGDrawElement{
                     this.#oECGCanvasElement.SetCanvasSize(this.WinWidth, this.WinHeight);        
                     break;
                 case ECGDrawElement.ObjElementMode.Static_DrawingECG:
-                    this.#oECGCanvasElement.SetCanvasSize(ECGElementInfo.ECGData_Sec * (GridElementInfo.smGridSize * 5 * 2) /*+ GridElementInfo.smGridSize*3*/, this.WinHeight);      
+                    this.#oECGCanvasElement.SetCanvasSize(ECGElementInfo.ECGData_Sec / this.#DataAndGridInfo.smGrid_Time * GridElementInfo.smGridSize + GridElementInfo.smGridSize * 3, this.WinHeight);    
                     break;
             }
 
             this.#oECGCanvasElement.SetsmGridSize(GridElementInfo.smGridSize);
 
-            //this.#oECGCanvasElement.ResetIndex();
+            this.#oECGCanvasElement.ResetIndex();
             this.StartDrawECG();
             
         }

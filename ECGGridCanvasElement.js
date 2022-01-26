@@ -47,9 +47,12 @@ SetGridMode:
 */
 class ECGGridCanvasElement{
     static CallBackFuncID = {'WindowResize': 0, 'ECGElementMouseMove':1,'ECGElementMouseDown':2,'ECGElementMouseUp':3}
-    static ObjGridMode = {'FixedGridSize':10,'FixedGridQuantity_W':11, 'FixedGridQuantity_H':12}
+    static ObjGridMode = {'FixedGridSize':10,'FixedGridQuantity_W':11, 'FixedGridQuantity_H':12,'FixedGridQuantity_ALL':13}
 
-    #Canvas_Info = {'Color': '#999999', 'LineWidth': 1,'TitleTextColor':'#ffffff','TitleTextSize':'25px','TitleTextFont':'Century','Title':'I','TitleDistance_X':0.5,'TitleDistance_Y':1,'GridMode': ECGGridCanvasElement.ObjGridMode.FixedGridSize, 'smGridSize': 5, 'GridQuantity':-1};
+    #Canvas_GridInfo = {'Color': '#999999', 'LineWidth': 1};
+    #Canvas_TitleTextInfo = {'TitleTextColor':'#ffffff','TitleTextSize':'25px','TitleTextFont':'Century','Title':'I','TitleDistance_X':0.5,'TitleDistance_Y':1}
+    #Canvas_Info = {'GridMode': ECGGridCanvasElement.ObjGridMode.FixedGridSize, 'smGridSize': 5};
+    #SymmVText;
 
     #Element;
     #Elementctx;
@@ -62,61 +65,62 @@ class ECGGridCanvasElement{
         }
 
     }
-
-    SetGridMode = (gridmode, value)=>{
+/*
+    SetGridMode = (gridmode, value, value2=undefined)=>{
         switch(gridmode){
             case ECGGridCanvasElement.ObjGridMode.FixedGridSize:
                 this.#Canvas_Info.GridMode=gridmode;
                 this.#Canvas_Info.smGridSize=value;
-                this.#Canvas_Info.GridQuantity=-1;
+                this.#Canvas_Info.WidthGridQuantity=-1;
             break;
             case ECGGridCanvasElement.ObjGridMode.FixedGridQuantity_W:
                 this.#Canvas_Info.GridMode=gridmode;
-                this.#Canvas_Info.GridQuantity=value;
-                this.#Canvas_Info.smGridSize=(this.#Element.width/(this.#Canvas_Info.GridQuantity+0.6))/5;
+                this.#Canvas_Info.WidthGridQuantity=value;
+                this.#Canvas_Info.smGridSize=(this.#Element.width/(this.#Canvas_Info.WidthGridQuantity+0.6))/5;
             break;
             case ECGGridCanvasElement.ObjGridMode.FixedGridQuantity_H:
                 this.#Canvas_Info.GridMode=gridmode;
-                this.#Canvas_Info.GridQuantity=value;
-                this.#Canvas_Info.smGridSize=(this.#Element.height/this.#Canvas_Info.GridQuantity)/5;
+                this.#Canvas_Info.HeightGridQuantity=value;
+                this.#Canvas_Info.smGridSize=(this.#Element.height/this.#Canvas_Info.HeightGridQuantity)/5;
             break;
+            case ECGGridCanvasElement.ObjGridMode.FixedGridQuantity_ALL:
+            
+                //break;
             default:
                 return false;
         }
         return true;
-    }
+    }*/
 
-    SetCanvasSize = (Width, Height) => {
-        this.#Elementctx.translate(0,0);
-        
+    SetCanvasSize = (Width, Height) => {        
         this.#Element.width  = Width;
         this.#Element.height = Height;
-        console.log('SetCanvasSize',this.#Element.width,this.#Element.height);
-        switch(this.#Canvas_Info.GridMode){
-            case ECGGridCanvasElement.ObjGridMode.FixedGridQuantity_W:
-                this.#Canvas_Info.smGridSize=(this.#Element.width/this.#Canvas_Info.GridQuantity)/5;
-            break;
-            case ECGGridCanvasElement.ObjGridMode.FixedGridQuantity_H:
-                this.#Canvas_Info.smGridSize=(this.#Element.height/this.#Canvas_Info.GridQuantity)/5;
-            break;
-        }
+    }
+
+    SetsmGridSize = (gridsize)=>{
+        console.log('SetsmGridSize',gridsize);
+        this.#Canvas_Info.smGridSize=gridsize;
     }
 
     SetDrawLinePara = (LineColor, LineWidth) => {
-        this.#Canvas_Info.Color = LineColor;
-        this.#Canvas_Info.LineWidth = LineWidth;
+        this.#Canvas_GridInfo.Color = LineColor;
+        this.#Canvas_GridInfo.LineWidth = LineWidth;
     }
 
     SetDrawTitleTextPara = (textcolor, textsize, textfont,distance_x,distance_y) => {
-        this.#Canvas_Info.TitleTextColor = textcolor;
-        this.#Canvas_Info.TitleTextSize = textsize;
-        this.#Canvas_Info.TitleTextFont = textfont;
-        this.#Canvas_Info.TitleDistance_X = distance_x;
-        this.#Canvas_Info.TitleDistance_Y = distance_y;
+        this.#Canvas_TitleTextInfo.TitleTextColor = textcolor;
+        this.#Canvas_TitleTextInfo.TitleTextSize = textsize;
+        this.#Canvas_TitleTextInfo.TitleTextFont = textfont;
+        this.#Canvas_TitleTextInfo.TitleDistance_X = distance_x;
+        this.#Canvas_TitleTextInfo.TitleDistance_Y = distance_y;
     }
 
     SetTitleText=(title)=>{
-        this.#Canvas_Info.Title = title;
+        this.#Canvas_TitleTextInfo.Title = title;
+    }
+
+    SetSymmVText = (mv)=>{
+        this.#SymmVText = mv+'mV';
     }
     
     AddEventCallBack = (CallBackMode, CallBackFunc) => {
@@ -132,73 +136,81 @@ class ECGGridCanvasElement{
     }
 
     Draw = ()=>{
-        this.#Elementctx.strokeStyle = this.#Canvas_Info.Color;
-        this.#Elementctx.lineWidth = this.#Canvas_Info.LineWidth;
+        this.#Elementctx.strokeStyle = this.#Canvas_GridInfo.Color;
+        this.#Elementctx.lineWidth = this.#Canvas_GridInfo.LineWidth;
         
         this.ClearView();
 
-        this.#Elementctx.beginPath();
-        
-        // grid Point
-        for(let x = this.#Canvas_Info.smGridSize; x <= this.#Element.width; x += this.#Canvas_Info.smGridSize){
-            //Top
-            for(let y = this.#Element.height/2; y > 0; y -= this.#Canvas_Info.smGridSize){
-                this.#Elementctx.strokeRect(x,y,1,1);
-                this.#Elementctx.stroke();
-            }
-            //Botton
-            for(let y = this.#Element.height/2; y <= this.#Element.height; y += this.#Canvas_Info.smGridSize){
-                this.#Elementctx.strokeRect(x,y,1,1);
-                this.#Elementctx.stroke();
-            }
+        this.#DrawSmGrid(this.#Canvas_Info.smGridSize,this.#Element.width,0,this.#Element.height);
+
+        this.#DrawVerticalLine (this.#Canvas_Info.smGridSize*3, this.#Element.width, this.#Canvas_Info.smGridSize*5);
+
+        this.#DrawParallelLine(0, this.#Element.height, this.#Canvas_Info.smGridSize*5);
+
+        this.#DrawSym();
+
+        this.#DrawTitleText();
+
+        //this.#Elementctx.beginPath();
+        // // grid Point
+        // for(let x = this.#Canvas_Info.smGridSize; x <= this.#Element.width; x += this.#Canvas_Info.smGridSize){
+        //     //Top
+        //     for(let y = this.#Element.height/2; y > 0; y -= this.#Canvas_Info.smGridSize){
+        //         this.#Elementctx.strokeRect(x,y,1,1);
+        //         this.#Elementctx.stroke();
+        //     }
+        //     //Botton
+        //     for(let y = this.#Element.height/2; y <= this.#Element.height; y += this.#Canvas_Info.smGridSize){
+        //         this.#Elementctx.strokeRect(x,y,1,1);
+        //         this.#Elementctx.stroke();
+        //     }
             
-        }
-        this.#Elementctx.closePath();
-
-        this.#Elementctx.beginPath();
-        for(let x = this.#Canvas_Info.smGridSize*3; x <= this.#Element.width; x += this.#Canvas_Info.smGridSize*5){
-            this.#Elementctx.moveTo(x,0.5);
-            this.#Elementctx.lineTo(x,this.#Element.height+.5);
-            this.#Elementctx.stroke();
-        }
+        // }
+        // this.#Elementctx.closePath();
         
-        for(let y = this.#Element.height/2; y <= this.#Element.height; y += this.#Canvas_Info.smGridSize*5){
-            this.#Elementctx.moveTo(0,y+0.5);
-            this.#Elementctx.lineTo(this.#Element.width,y+0.5);
-            this.#Elementctx.stroke();
-        }
 
-        for(let y = this.#Element.height/2; y > 0; y -= this.#Canvas_Info.smGridSize*5){
-            this.#Elementctx.moveTo(0,y+0.5);
-            this.#Elementctx.lineTo(this.#Element.width,y+0.5);
-            this.#Elementctx.stroke();
-        }
+        //this.#Elementctx.beginPath();
+        // for(let x = this.#Canvas_Info.smGridSize*3; x <= this.#Element.width; x += this.#Canvas_Info.smGridSize*5){
+        //     this.#Elementctx.moveTo(x,0.5);
+        //     this.#Elementctx.lineTo(x,this.#Element.height+.5);
+        //     this.#Elementctx.stroke();
+        // }
+        // for(let y = this.#Element.height/2; y <= this.#Element.height; y += ){
+        //     this.#Elementctx.moveTo(0,y+0.5);
+        //     this.#Elementctx.lineTo(this.#Element.width,y+0.5);
+        //     this.#Elementctx.stroke();
+        // }
+        // for(let y = this.#Element.height/2; y > 0; y -= this.#Canvas_Info.smGridSize*5){
+        //     this.#Elementctx.moveTo(0,y+0.5);
+        //     this.#Elementctx.lineTo(this.#Element.width,y+0.5);
+        //     this.#Elementctx.stroke();
+        // }
+        // this.#Elementctx.closePath();
 
-        this.#Elementctx.closePath();
-
-        this.#Elementctx.fillStyle = "#00c100";
-    
-        this.symbleUnit = Math.floor(this.#Canvas_Info.smGridSize/2);
-        this.#Elementctx.fillRect(this.symbleUnit, this.#Element.height/2, this.symbleUnit * 2, this.symbleUnit * -1);
-        this.#Elementctx.fillRect(this.symbleUnit * 2, this.#Element.height/2 , this.symbleUnit * 1, this.#Canvas_Info.smGridSize * -1 * 10);
-        this.#Elementctx.fillRect(this.symbleUnit * 2, this.#Element.height/2 - this.#Canvas_Info.smGridSize * 9.5 , this.symbleUnit * 3, this.symbleUnit * -1);
-        this.#Elementctx.fillRect(this.symbleUnit * 4, this.#Element.height/2 - (this.#Canvas_Info.smGridSize * 10), this.symbleUnit * 1, this.#Canvas_Info.smGridSize * 10);
-        this.#Elementctx.fillRect(this.symbleUnit * 4, this.#Element.height/2, this.symbleUnit * 2, this.symbleUnit * -1);
-
-
-        this.#Elementctx.font = 'Bold '+this.#Canvas_Info.smGridSize*1.2 + 'px Arial'
-        this.#Elementctx.fillStyle="#00c100"
-        this.#Elementctx.textAlign = "left";
-        this.#Elementctx.textBaseline = "top";
-        this.#Elementctx.fillText('1mv', this.symbleUnit , this.#Element.height/2 + this.symbleUnit)
-
-
-        this.#Elementctx.font = this.#Canvas_Info.TitleTextSize+' '+this.#Canvas_Info.TitleTextFont
-        this.#Elementctx.fillStyle=this.#Canvas_Info.TitleTextColor
-        this.#Elementctx.textAlign = "left";
-        this.#Elementctx.textBaseline = "top";
         
-        this.#Elementctx.fillText(this.#Canvas_Info.Title, Math.round(this.#Canvas_Info.smGridSize * this.#Canvas_Info.TitleDistance_X), Math.round(this.#Canvas_Info.smGridSize * this.#Canvas_Info.TitleDistance_Y))  //填滿文字
+        // this.#Elementctx.fillStyle = "#00c100";
+        // this.symbleUnit = Math.floor(this.#Canvas_Info.smGridSize/2);
+        // this.#Elementctx.fillRect(this.symbleUnit, this.#Element.height/2, this.symbleUnit * 2, this.symbleUnit * -1);
+        // this.#Elementctx.fillRect(this.symbleUnit * 2, this.#Element.height/2 , this.symbleUnit * 1, this.#Canvas_Info.smGridSize * -1 * 10);
+        // this.#Elementctx.fillRect(this.symbleUnit * 2, this.#Element.height/2 - this.#Canvas_Info.smGridSize * 9.5 , this.symbleUnit * 3, this.symbleUnit * -1);
+        // this.#Elementctx.fillRect(this.symbleUnit * 4, this.#Element.height/2 - (this.#Canvas_Info.smGridSize * 10), this.symbleUnit * 1, this.#Canvas_Info.smGridSize * 10);
+        // this.#Elementctx.fillRect(this.symbleUnit * 4, this.#Element.height/2, this.symbleUnit * 2, this.symbleUnit * -1);
+
+
+        // this.#Elementctx.font = 'Bold '+this.#Canvas_Info.smGridSize*1.2 + 'px Arial'
+        // this.#Elementctx.fillStyle="#00c100"
+        // this.#Elementctx.textAlign = "left";
+        // this.#Elementctx.textBaseline = "top";
+        // this.#Elementctx.fillText('1mv', this.symbleUnit , this.#Element.height/2 + this.symbleUnit)
+
+
+        
+
+        // this.#Elementctx.font = this.#Canvas_TitleTextInfo.TitleTextSize+' '+this.#Canvas_TitleTextInfo.TitleTextFont
+        // this.#Elementctx.fillStyle=this.#Canvas_TitleTextInfo.TitleTextColor
+        // this.#Elementctx.textAlign = "left";
+        // this.#Elementctx.textBaseline = "top";
+        // this.#Elementctx.fillText(this.#Canvas_TitleTextInfo.Title, Math.round(this.#Canvas_Info.smGridSize * this.#Canvas_TitleTextInfo.TitleDistance_X), Math.round(this.#Canvas_Info.smGridSize * this.#Canvas_TitleTextInfo.TitleDistance_Y))  //填滿文字
     }
 
     ClearView = () => {
@@ -209,6 +221,82 @@ class ECGGridCanvasElement{
 
     GetCanvasInfo(){
         return this.#Canvas_Info;
+    }
+
+//----------------------------------------------------------------------------------------------------------
+    #DrawSmGrid = (startX,endX,startY,endY)=>{
+        this.#Elementctx.beginPath();
+        
+        // grid Point
+        for(let x = startX; x <= endX; x += this.#Canvas_Info.smGridSize){
+            //Top
+            for(let y = this.#Element.height/2; y > startY; y -= this.#Canvas_Info.smGridSize){
+                this.#Elementctx.strokeRect(x,y,1,1);
+                this.#Elementctx.stroke();
+            }
+            //Botton
+            for(let y = this.#Element.height/2; y <= endY; y += this.#Canvas_Info.smGridSize){
+                this.#Elementctx.strokeRect(x,y,1,1);
+                this.#Elementctx.stroke();
+            }
+            
+        }
+        this.#Elementctx.closePath();
+
+    }
+
+    #DrawVerticalLine = (start,end,distance)=>{
+        this.#Elementctx.beginPath();
+
+        for(let x = start; x <= end; x += distance){
+            this.#Elementctx.moveTo(x,0.5);
+            this.#Elementctx.lineTo(x,this.#Element.height+.5);
+            this.#Elementctx.stroke();
+        }
+
+        this.#Elementctx.closePath();
+    }
+
+    #DrawParallelLine = (start,end,distance)=>{
+        this.#Elementctx.beginPath();
+
+        for(let y = this.#Element.height/2; y <= end; y += distance){
+            this.#Elementctx.moveTo(0,y+0.5);
+            this.#Elementctx.lineTo(this.#Element.width,y+0.5);
+            this.#Elementctx.stroke();
+        }
+
+        for(let y = this.#Element.height/2; y > start; y -= distance){
+            this.#Elementctx.moveTo(0,y+0.5);
+            this.#Elementctx.lineTo(this.#Element.width,y+0.5);
+            this.#Elementctx.stroke();
+        }
+        this.#Elementctx.closePath();
+    }
+
+    #DrawTitleText(){
+        this.#Elementctx.font = this.#Canvas_TitleTextInfo.TitleTextSize+' '+this.#Canvas_TitleTextInfo.TitleTextFont
+        this.#Elementctx.fillStyle=this.#Canvas_TitleTextInfo.TitleTextColor
+        this.#Elementctx.textAlign = "left";
+        this.#Elementctx.textBaseline = "top";
+        
+        this.#Elementctx.fillText(this.#Canvas_TitleTextInfo.Title, Math.round(this.#Canvas_Info.smGridSize * this.#Canvas_TitleTextInfo.TitleDistance_X), Math.round(this.#Canvas_Info.smGridSize * this.#Canvas_TitleTextInfo.TitleDistance_Y))  //填滿文字
+    }
+
+    #DrawSym(){
+        this.#Elementctx.fillStyle = "#00c100";
+        this.symbleUnit = Math.floor(this.#Canvas_Info.smGridSize/2);
+        this.#Elementctx.fillRect(this.symbleUnit, this.#Element.height/2, this.symbleUnit * 2, this.symbleUnit * -1);
+        this.#Elementctx.fillRect(this.symbleUnit * 2, this.#Element.height/2 , this.symbleUnit * 1, this.#Canvas_Info.smGridSize * -1 * 10);
+        this.#Elementctx.fillRect(this.symbleUnit * 2, this.#Element.height/2 - this.#Canvas_Info.smGridSize * 9.5 , this.symbleUnit * 3, this.symbleUnit * -1);
+        this.#Elementctx.fillRect(this.symbleUnit * 4, this.#Element.height/2 - (this.#Canvas_Info.smGridSize * 10), this.symbleUnit * 1, this.#Canvas_Info.smGridSize * 10);
+        this.#Elementctx.fillRect(this.symbleUnit * 4, this.#Element.height/2, this.symbleUnit * 2, this.symbleUnit * -1);
+
+        this.#Elementctx.font = 'Bold '+this.#Canvas_Info.smGridSize*1.2 + 'px Arial'
+        this.#Elementctx.fillStyle="#00c100"
+        this.#Elementctx.textAlign = "left";
+        this.#Elementctx.textBaseline = "top";
+        this.#Elementctx.fillText(this.#SymmVText, this.symbleUnit , this.#Element.height/2 + this.symbleUnit)
     }
 
 }

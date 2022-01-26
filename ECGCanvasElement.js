@@ -13,8 +13,8 @@ const ECGDataRegisterClass = require('./ECGDataRegister.js').ECGDataRegister;
 class ECGCanvasElement{
     static CallBackFuncID = {'WindowResize': 0, 'ECGElementMouseMove':1,'ECGElementMouseDown':2,'ECGElementMouseUp':3}
     static ObjGainItem = {'Gain_0.5':0.5,'Gain_1.0':1.0,'Gain_2.0':2.0,'Gain_4.0':4.0}; 
-    static #ConstData = {'TimeUnit':0.2, 'VoltageUnit':0.1}
-    #Canvas_Info = {'Color': '#00c100', 'LineWidth': 1,'smGridSize': 5,'ECGQuantity_Sec':500,'ECGData_Sec':10,'Gain':ECGCanvasElement.ObjGainItem['Gain_1.0']};
+    #ConstData = {'TimeUnit':0.2, 'VoltageUnit':0.1}
+    #Canvas_Info = {'Color': '#00c100', 'LineWidth': 1,'smGridSize': 5,'ECGQuantity_Sec':500,'ECGData_Sec':20,'Gain':ECGCanvasElement.ObjGainItem['Gain_1.0']};
     
     #Element;
     #Elementctx;
@@ -24,7 +24,6 @@ class ECGCanvasElement{
     #DrawECGIndex = 0;
     #CounterIndex = -1;
     #NowEcgData=0;
-    #PreEcgData=0;
 
     #NowEcgData_smGrid = 0;
     #PreEcgData_smGrid = 0;
@@ -45,10 +44,13 @@ class ECGCanvasElement{
     }
 
     SetCanvasSize = (Width, Height) => {
-
         this.#Element.width  = Width;
-        this.#Element.height = Height;
-        
+        this.#Element.height = Height; 
+    }
+
+    SetConstData = (smtimeunit,smvoltageunit)=>{
+        this.#ConstData.TimeUnit = smtimeunit;
+        this.#ConstData.VoltageUnit = smvoltageunit;
     }
 
     GetCanvasSize = ()=>{
@@ -101,8 +103,10 @@ class ECGCanvasElement{
     }
 
     #DynamicDrawECG = ()=>{
-        var DrawRange =(this.#Canvas_Info.ECGQuantity_Sec *ECGCanvasElement.#ConstData.TimeUnit)/this.#Canvas_Info.smGridSize;// this.#ECGDataRegister.GetSize() / this.#Element.width;
-        var indx = Math.floor(this.#DrawECGIndex*DrawRange);
+        var DrawRange =(this.#Canvas_Info.ECGQuantity_Sec * this.#ConstData.TimeUnit)/this.#Canvas_Info.smGridSize;
+        var indx = Math.ceil(this.#DrawECGIndex*DrawRange);
+
+        indx = indx >= this.#ECGDataRegister.GetSize()? this.#ECGDataRegister.GetSize():indx;
 
         this.#Elementctx.strokeStyle = this.#Canvas_Info.Color;
         this.#Elementctx.lineWidth = this.#Canvas_Info.LineWidth;
@@ -113,25 +117,23 @@ class ECGCanvasElement{
             if(this.#NowEcgData.state){
 
                 if((this.#CounterIndex)===indx){
-                    this.#Elementctx.beginPath();
-                    //0.01是模擬mV
-                    this.#NowEcgData_smGrid = Math.floor((this.#NowEcgData.ECGData *0.01 / (ECGCanvasElement.#ConstData.VoltageUnit / this.#Canvas_Info.Gain))*(this.#Canvas_Info.smGridSize));
-    
-                    this.#Elementctx.clearRect(this.#Canvas_Info.smGridSize * 3+this.#DrawECGIndex, 0, 25, this.#Element.height)
-    
-                    this.#Elementctx.moveTo(this.#Canvas_Info.smGridSize * 3+this.#DrawECGIndex-1, (this.#Element.height/2) + this.#PreEcgData_smGrid );
-                    this.#Elementctx.lineTo(this.#Canvas_Info.smGridSize * 3+this.#DrawECGIndex, (this.#Element.height/2) + this.#NowEcgData_smGrid );
-    
+                    
+
+                    this.#NowEcgData_smGrid = Math.floor((this.#NowEcgData.ECGData / (this.#ConstData.VoltageUnit / this.#Canvas_Info.Gain))*(this.#Canvas_Info.smGridSize));
+                    console.log(this.#ConstData.VoltageUnit,this.#Canvas_Info.Gain,this.#Canvas_Info.smGridSize)
+
+                    this.#Elementctx.clearRect(this.#Canvas_Info.smGridSize * 3+this.#DrawECGIndex, 0, 25, this.#Element.height);
+
+                    this.#drawLine(this.#Canvas_Info.smGridSize * 3+this.#DrawECGIndex-1, (this.#Element.height/2) + this.#PreEcgData_smGrid,
+                                    this.#Canvas_Info.smGridSize * 3+this.#DrawECGIndex, (this.#Element.height/2) + this.#NowEcgData_smGrid);
+
+
                     this.#DrawECGIndex = this.#DrawECGIndex + 1;
                     
                     if(this.#DrawECGIndex+this.#Canvas_Info.smGridSize * 3 >= this.#Element.width){
                         this.ResetIndex();
                     }
                     this.#PreEcgData_smGrid = this.#NowEcgData_smGrid;
-                    //this.#PreEcgData = this.#NowEcgData;
-    
-                    this.#Elementctx.stroke();
-                    this.#Elementctx.closePath();
 
                     indx = Math.floor(this.#DrawECGIndex * DrawRange);
                     
@@ -142,7 +144,7 @@ class ECGCanvasElement{
     }
 
     StaticDrawECG = () => {
-        var DrawRange =this.#ECGDataRegister.GetSize() / this.#Element.width;
+        var DrawRange =(this.#Canvas_Info.ECGQuantity_Sec * this.#ConstData.TimeUnit)/this.#Canvas_Info.smGridSize;
 
         var ECGDataBuf = this.#ECGDataRegister.GetDatas(this.#ECGDataRegister.GetSize());
         this.#Elementctx.strokeStyle = this.#Canvas_Info.Color;
@@ -150,61 +152,22 @@ class ECGCanvasElement{
 
 
         for(var pos = 0; pos < this.#Element.width; pos++){
-            var indx = Math.floor(pos*DrawRange);
-            this.#Elementctx.beginPath();
+            var indx = Math.ceil(pos*DrawRange);
 
-            //0.01是模擬mV
-            this.#NowEcgData_smGrid = Math.floor((ECGDataBuf[indx] *0.01 / (ECGCanvasElement.#ConstData.VoltageUnit / this.#Canvas_Info.Gain))*(this.#Canvas_Info.smGridSize));
+            indx = indx >= this.#ECGDataRegister.GetSize()? this.#ECGDataRegister.GetSize():indx;
+            this.#NowEcgData_smGrid = Math.floor((ECGDataBuf[indx] / (this.#ConstData.VoltageUnit / this.#Canvas_Info.Gain))*(this.#Canvas_Info.smGridSize));
 
-            this.#Elementctx.moveTo(this.#DrawECGIndex-1, (this.#Element.height/2) + this.#PreEcgData_smGrid);
-            this.#Elementctx.lineTo(this.#DrawECGIndex, (this.#Element.height/2) + this.#NowEcgData_smGrid);
-            this.#DrawECGIndex = (this.#DrawECGIndex + 1) % this.#Element.width;
-            
+
+            this.#drawLine(this.#Canvas_Info.smGridSize * 3+this.#DrawECGIndex-1, (this.#Element.height/2) + this.#PreEcgData_smGrid,
+            this.#Canvas_Info.smGridSize * 3+this.#DrawECGIndex, (this.#Element.height/2) + this.#NowEcgData_smGrid);
+
+
+            this.#DrawECGIndex = this.#DrawECGIndex + 1;
+
             this.#PreEcgData_smGrid = this.#NowEcgData_smGrid;
-
-            this.#Elementctx.stroke();
-            this.#Elementctx.closePath();
 
         }
 
-
-
-        // for(var indx = 0;indx < ECGDataBuf.length; indx+=DrawRange){
-        //     console.log('this.#DrawECGIndex',this.#DrawECGIndex);
-        //     this.#Elementctx.beginPath();
-
-        //     //0.01是模擬mV
-        //     this.#NowEcgData_smGrid = Math.floor((ECGDataBuf[indx] *0.01 / (ECGCanvasElement.#ConstData.VoltageUnit * this.#Canvas_Info.Gain))*(this.#Canvas_Info.smGridSize));
-
-        //     this.#Elementctx.moveTo(this.#DrawECGIndex-1, (this.#Element.height/2) + this.#PreEcgData_smGrid);
-        //     this.#Elementctx.lineTo(this.#DrawECGIndex, (this.#Element.height/2) + this.#NowEcgData_smGrid);
-        //     this.#DrawECGIndex = (this.#DrawECGIndex + 1) % this.#Element.width;
-            
-        //     this.#PreEcgData_smGrid = this.#NowEcgData_smGrid;
-
-        //     this.#Elementctx.stroke();
-        //     this.#Elementctx.closePath();
-        // }
-
-        // do{
-        //     this.#NowEcgData = this.#ECGDataRegister.GetData();
-        //     if(this.#NowEcgData.state){
-            
-        //         this.#Elementctx.beginPath();
-
-        //         //0.01是模擬mV
-        //         this.#NowEcgData_smGrid = Math.floor((this.#NowEcgData.ECGData *0.01 / (ECGCanvasElement.#ConstData.VoltageUnit * this.#Canvas_Info.Gain))*(this.#Canvas_Info.smGridSize));
-
-        //         this.#Elementctx.moveTo(this.#DrawECGIndex-1, (this.#Element.height/2) + this.#PreEcgData_smGrid);
-        //         this.#Elementctx.lineTo(this.#DrawECGIndex, (this.#Element.height/2) + this.#NowEcgData_smGrid);
-        //         this.#DrawECGIndex = (this.#DrawECGIndex + 1) % this.#Element.width;
-                
-        //         this.#PreEcgData_smGrid = this.#NowEcgData_smGrid;
-
-        //         this.#Elementctx.stroke();
-        //         this.#Elementctx.closePath();
-        //     }
-        // }while(this.#NowEcgData.state);
     }
 
     ClearView = () => {
@@ -232,6 +195,16 @@ class ECGCanvasElement{
         }
         return true;
     }
+
+    //----------------------------------------------------------
+    #drawLine = (startX,startY,endX,endY)=>{
+        this.#Elementctx.beginPath();
+        this.#Elementctx.moveTo(startX,startY );
+        this.#Elementctx.lineTo(endX, endY);
+        this.#Elementctx.stroke();
+        this.#Elementctx.closePath();
+    }
+
 }
 
 module.exports = {
