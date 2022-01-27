@@ -55,7 +55,7 @@ let DrawECGWindowCtrler = new ECGDrawElementCtrlClass(elementInfoArr,'#999999',1
 
 var ElementIdList =  DrawECGWindowCtrler.GetElementIDList()
 
-for(var run=0;run<10000;run++){
+for(var run=0;run<15000;run++){
     for(var i = 0 ;i<this.ElementIdList.length;i++){
       DrawECGWindowCtrler.SetECGData(ElementIdList[i],ECGBUF);
     }

@@ -44,7 +44,7 @@ class ECGDataRegister{
 
     constructor(ListSize) {
         this.#DataList = new Array(ListSize);
-        this.#InputIndex = -1;
+        this.#InputIndex = 0;
         this.#InputOverflow = false;
         this.#OutputIndex = -1;
     }
@@ -56,20 +56,16 @@ class ECGDataRegister{
     }
 
     SetData = (Data) =>{
-        try{
-            if(this.#InputIndex + 1 >= this.#DataList.length){
-                this.#InputIndex = 0;
-                this.#InputOverflow = true;
-                //console.error('SetData: ', this.#InputOverflow)
-            }else{
-                this.#InputIndex = (this.#InputIndex + 1) % this.#DataList.length;
-            }
+        
+        this.#DataList[this.#InputIndex] = Data;
 
-            this.#DataList[this.#InputIndex] = Data;
-
-        }catch(e){
-            return false;
+        if(this.#InputIndex + 1 >= this.#DataList.length){
+            this.#InputIndex = 0;
+            this.#InputOverflow = true;
+        }else{
+            this.#InputIndex = (this.#InputIndex + 1) % this.#DataList.length;
         }
+
         return true;
     }
 
@@ -106,8 +102,7 @@ class ECGDataRegister{
 
     GetDatas = (Quantity)=>{
         var ECGDataList = [];
-        
-        for(var indx = (this.#InputIndex + 1)-Quantity, Stop = this.#InputIndex; indx != Stop; indx = (indx + 1)% this.#DataList.length){
+        for(var indx = (this.#InputIndex + 1)-Quantity<0? this.#DataList.length + (this.#InputIndex + 1)-Quantity : (this.#InputIndex + 1), Stop = this.#InputIndex; indx != Stop; indx = (indx + 1)% this.#DataList.length){
             ECGDataList.push(this.#DataList[indx]);
         }
         return ECGDataList;
@@ -117,11 +112,11 @@ class ECGDataRegister{
     Resize(NewSize){
         if(NewSize>this.GetSize()){
             while(NewSize > this.GetSize())
-                this.#DataList.push(defaultValue);
+                this.#DataList.push(0);
         }else if(NewSize < this.GetSize()){
             this.#DataList.length = NewSize;
         }
-
+        console.log('this.#DataList.length',this.#DataList.length)
         this.#InputIndex = -1;
         this.#InputOverflow = false;
         this.#OutputIndex = -1;

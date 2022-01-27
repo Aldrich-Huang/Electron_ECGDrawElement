@@ -60,6 +60,7 @@ class ECGGridCanvasElement{
     constructor(ElementID) {
 
         this.#Element = document.getElementById(ElementID);
+        this.#CSSCtrl_Element();
         if(this.#Element.getContext){
             this.#Elementctx = this.#Element.getContext('2d');
         }
@@ -98,7 +99,6 @@ class ECGGridCanvasElement{
     }
 
     SetsmGridSize = (gridsize)=>{
-        console.log('SetsmGridSize',gridsize);
         this.#Canvas_Info.smGridSize=gridsize;
     }
 
@@ -121,7 +121,6 @@ class ECGGridCanvasElement{
 
     SetSymmVText = (mv)=>{
         this.#SymmVText = mv+'mV';
-        this.ClearView();
         this.Draw();
     }
     
@@ -226,6 +225,10 @@ class ECGGridCanvasElement{
     }
 
 //----------------------------------------------------------------------------------------------------------
+    #CSSCtrl_Element = ()=>{
+        this.#Element.style['position'] = 'absolute'
+    }
+
     #DrawSmGrid = (startX,endX,startY,endY)=>{
         this.#Elementctx.beginPath();
         

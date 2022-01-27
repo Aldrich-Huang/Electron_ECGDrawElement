@@ -26,11 +26,13 @@ class ECGDrawElementCtrl{
                 this.DrawElementList[Index].AddEventCallBack( ECGDrawElementClass.CallBackFuncID.ECGElementMouseMove, this.#CallBack_ECGEleMouseMove);
                 this.DrawElementList[Index].AddEventCallBack( ECGDrawElementClass.CallBackFuncID.WindowResize, this.#CallBack_WindowResize);
                 this.DrawElementList[Index].SetCanvasPara(10,1.5,0.2,0.1);
+                this.DrawElementList[Index].SetRegisterPara(500,20);
                 //this.DrawElementList[Index].SetGridMode(ECGDrawElementCtrl.ObjGridMode.FixedGridQuantity_W, 10);
                 this.DrawElementList[Index].SetDrawGridPara(GridColor,GridWidth);
                 this.DrawElementList[Index].SetDrawECGPara(ECGColor,ECGWidth);
                 this.DrawElementList[Index].DrawGrid();
-                //this.DrawElementList[Index].SetGain(ECGDrawElementClass.ObjGainItem['Gain_2.0']);
+                //this.DrawElementList[Index].SetGain(ECGDrawElementClass.ObjGainItem['Gain_4.0']);
+                
             }catch (e){
                 console.error(e);
             }
@@ -117,6 +119,9 @@ class ECGDrawElementCtrl{
     //     });
     // }
 
+
+
+//----------------------------------------------------------------------
     #CallBack_ECGEleMouseMove = (id,postion)=>{
         return new Promise((acc, rej) => {
             if(this.DrawElementList.length<0)

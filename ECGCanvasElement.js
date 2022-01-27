@@ -69,13 +69,18 @@ class ECGCanvasElement{
         return true;
     }
 
-    SetDataQuantitySec(DataQuantity){
-        this.#Canvas_Info.ECGQuantity_Sec = DataQuantity;
+    SetRegisterPara = (ResolutionOfSec, Sec)=>{
+        this.#Canvas_Info.ECGQuantity_Sec = ResolutionOfSec;
+        this.#Canvas_Info.ECGData_Sec = Sec;
+
+        // if(this.#ECGDataRegister != undefined)
+        //     delete this.#ECGDataRegister;
+
+        var RegisterSize = this.#Canvas_Info.ECGQuantity_Sec * this.#Canvas_Info.ECGData_Sec;
+        console.log('SetRegisterPara RegisterSize',RegisterSize);
+        this.#ECGDataRegister.Resize(RegisterSize);
     }
 
-    SetDataTime(Sec){
-        this.#Canvas_Info.ECGData_Sec = Sec;
-    }
 
     SetsmGridSize = (smGridSize)=>{
         this.#Canvas_Info.smGridSize = smGridSize;
@@ -85,6 +90,28 @@ class ECGCanvasElement{
     SetDrawLinePara = (LineColor, LineWidth) => {
         this.#Canvas_Info.Color = LineColor;
         this.#Canvas_Info.LineWidth = LineWidth;
+    }
+
+    SetGainInfo = (gain) =>{
+        switch(gain){
+            case ECGCanvasElement.ObjGainItem['Gain_0.5']:
+            case ECGCanvasElement.ObjGainItem['Gain_1.0']:
+            case ECGCanvasElement.ObjGainItem['Gain_2.0']:
+            case ECGCanvasElement.ObjGainItem['Gain_4.0']:
+                this.#Canvas_Info.Gain = gain;
+                console.log(' this.#Canvas_Info.Gain', this.#Canvas_Info.Gain);
+                break;
+            default:
+                console.log('Error:Gain ', gain);
+                return false;
+                break;
+        }
+        return true;
+    }
+
+    ResetIndex(){
+        this.#DrawECGIndex = 0;
+        this.#CounterIndex = -1;
     }
 
     PushECGData(ECGData){
@@ -100,46 +127,6 @@ class ECGCanvasElement{
     CloseDynamicDrawECG = () => {
         if(this.#ECGIntervalID!=undefined)
             clearInterval(this.#ECGIntervalID);
-    }
-
-    #DynamicDrawECG = ()=>{
-        var DrawRange =(this.#Canvas_Info.ECGQuantity_Sec * this.#ConstData.TimeUnit)/this.#Canvas_Info.smGridSize;
-        var indx = Math.ceil(this.#DrawECGIndex*DrawRange);
-
-        indx = indx >= this.#ECGDataRegister.GetSize()? this.#ECGDataRegister.GetSize():indx;
-
-        this.#Elementctx.strokeStyle = this.#Canvas_Info.Color;
-        this.#Elementctx.lineWidth = this.#Canvas_Info.LineWidth;
-
-        do{
-            this.#NowEcgData = this.#ECGDataRegister.GetData();
-            
-            if(this.#NowEcgData.state){
-
-                if((this.#CounterIndex)===indx){
-                    
-
-                    this.#NowEcgData_smGrid = Math.floor((this.#NowEcgData.ECGData / (this.#ConstData.VoltageUnit / this.#Canvas_Info.Gain))*(this.#Canvas_Info.smGridSize));
-                    
-                    this.#Elementctx.clearRect(+this.#DrawECGIndex, 0, 25, this.#Element.height);
-
-                    this.#drawLine(this.#DrawECGIndex-1, (this.#Element.height/2) + this.#PreEcgData_smGrid,
-                                    this.#DrawECGIndex, (this.#Element.height/2) + this.#NowEcgData_smGrid);
-
-
-                    this.#DrawECGIndex = this.#DrawECGIndex + 1 ;
-                    
-                    if(this.#DrawECGIndex>= this.#Element.width){
-                        this.ResetIndex();
-                    }
-                    this.#PreEcgData_smGrid = this.#NowEcgData_smGrid;
-
-                    indx = Math.floor(this.#DrawECGIndex * DrawRange);
-                    
-                }
-                this.#CounterIndex +=1;
-            }
-        }while(this.#NowEcgData.state);
     }
 
     StaticDrawECG = () => {
@@ -175,27 +162,46 @@ class ECGCanvasElement{
         this.#Elementctx.closePath();
     }
 
-    ResetIndex(){
-        this.#DrawECGIndex = 0;
-        this.#CounterIndex = -1;
-    }
-
-    SetGainInfo = (gain) =>{
-        switch(gain){
-            case ECGCanvasElement.ObjGainItem['Gain_0.5']:
-            case ECGCanvasElement.ObjGainItem['Gain_1.0']:
-            case ECGCanvasElement.ObjGainItem['Gain_2.0']:
-            case ECGCanvasElement.ObjGainItem['Gain_4.0']:
-                this.#Canvas_Info.Gain = gain;
-                break;
-            default:
-                return false;
-                break;
-        }
-        return true;
-    }
-
     //----------------------------------------------------------
+    #DynamicDrawECG = ()=>{
+        var DrawRange =(this.#Canvas_Info.ECGQuantity_Sec * this.#ConstData.TimeUnit)/this.#Canvas_Info.smGridSize;
+        var indx = Math.floor(this.#DrawECGIndex*DrawRange);
+
+        indx = indx >= this.#ECGDataRegister.GetSize()? this.#ECGDataRegister.GetSize():indx;
+
+        this.#Elementctx.strokeStyle = this.#Canvas_Info.Color;
+        this.#Elementctx.lineWidth = this.#Canvas_Info.LineWidth;
+
+        do{
+            this.#NowEcgData = this.#ECGDataRegister.GetData();
+            
+            if(this.#NowEcgData.state){
+
+                if((this.#CounterIndex)===indx){
+                    
+
+                    this.#NowEcgData_smGrid = Math.floor((this.#NowEcgData.ECGData / (this.#ConstData.VoltageUnit / this.#Canvas_Info.Gain))*(this.#Canvas_Info.smGridSize));
+                    
+                    this.#Elementctx.clearRect(+this.#DrawECGIndex, 0, 25, this.#Element.height);
+                    
+                    this.#drawLine(this.#DrawECGIndex-1, (this.#Element.height/2) + this.#PreEcgData_smGrid,
+                                    this.#DrawECGIndex, (this.#Element.height/2) + this.#NowEcgData_smGrid);
+
+                    this.#DrawECGIndex = this.#DrawECGIndex + 1 ;
+                    
+                    if(this.#DrawECGIndex>= this.#Element.width){
+                        this.ResetIndex();
+                    }
+                    this.#PreEcgData_smGrid = this.#NowEcgData_smGrid;
+                    
+                    indx = Math.floor(this.#DrawECGIndex * DrawRange);
+                    
+                }
+                this.#CounterIndex +=1;
+            }
+        }while(this.#NowEcgData.state);
+    }
+
     #drawLine = (startX,startY,endX,endY)=>{
         this.#Elementctx.beginPath();
         this.#Elementctx.moveTo(startX,startY );

@@ -28,8 +28,10 @@ class ECGDrawElement{
     static ObjGainItem = ECGCanvasElementClass.ObjGainItem;
     
     #DataAndGridInfo={'WinTotleSec':10,'WinTotlemV':6,'smGrid_mV':0.2,'smGrid_Time':0.1}
-
+    #MainWinPosInfo;
     
+    ShowerWinElement;
+
     Clicked = false;
     WinWidth = 200;
     WinHeight = 200;
@@ -45,44 +47,45 @@ class ECGDrawElement{
     #oECGCanvasElement
 
     constructor(MainWinId, ECGElementDrawMode = ECGDrawElement.ObjElementMode.Static_DrawingECG) {
-        var outerwinelementid = MainWinId + '_outer'
-        var winelementid = MainWinId + "_Show";
+        var ecgshowerelement = MainWinId + '_shower';
+        var outerwinelementid = MainWinId + '_outer';
+        var innerwinelementid = MainWinId + "_inner";
         var gridelementid = MainWinId + "_CanvasGrid";
         var ecgelementid = MainWinId + "_CanvasECG";
 
         this.#CallBackFunList = new Array(Object.keys(ECGDrawElement.CallBackFuncID).length);
 
         this.MainWinElement = document.getElementById(MainWinId);
-        this.MainWinElement.innerHTML ='<div class="ECGMainWindows_Shower">'+
-        '<canvas id="'+gridelementid+'" class="CanvasShowGrid"></canvas>'+
-        '<div id="'+outerwinelementid+'" class="ShowECGWindow-outer">'+
-            '<div id="'+winelementid+'" class="ShowECGWindow-inner">'+
-            '<div class="ShowECGWindow-Shower"><canvas id="'+ecgelementid+'"></canvas></div>'+
-        '</div></div></div>';
+        this.MainWinElement.innerHTML ='<style>.ShowECGWindow-inner::-webkit-scrollbar {display: none;}</style><div id="'+ecgshowerelement+'">'+
+        '<canvas id="'+gridelementid+'"></canvas>'+
+        '<div id="'+outerwinelementid+'">'+
+            '<div id="'+innerwinelementid+'" class="ShowECGWindow-inner">'+
+            '<canvas id="'+ecgelementid+'"></canvas></div>'+
+        '</div></div>';
 
+        this.#MainWinPosInfo = this.GetMainWinInfo();
 
+        this.ShowerWinElement = document.getElementById(ecgshowerelement);
+        this.#CSSCtrl_ShowerWin();
         //Get Windows size.
-        this.WinId = winelementid;
-        this.WinElement = document.getElementById(winelementid);
-
+        this.WinId = innerwinelementid;
+        this.InnerWinElement = document.getElementById(innerwinelementid);
+        this.#CSSCtrl_Innter();
         this.OuterWinElement = document.getElementById(outerwinelementid);
-
-        this.WinWidth = this.WinElement.offsetWidth; 
-        this.WinHeight = this.WinElement.offsetHeight;
-        
+        this.#CSSCtrl_Outer();
         //Build draw ECG grid class
         this.#ObjGridElement = new ECGGridCanvasElementClass(gridelementid);
-        this.#ObjGridElement.SetCanvasSize(this.WinWidth, this.WinHeight);
+        this.#ObjGridElement.SetCanvasSize(this.#MainWinPosInfo.width, this.#MainWinPosInfo.height);
         var WidthGridQuantity = this.#DataAndGridInfo.WinTotleSec/this.#DataAndGridInfo.smGrid_Time;
-        console.log('WidthGridQuantity',WidthGridQuantity)
-        this.#ObjGridElement.SetsmGridSize((this.WinWidth/(WidthGridQuantity+0.6))/5);
+
+        this.#ObjGridElement.SetsmGridSize((this.#MainWinPosInfo.width/(WidthGridQuantity+0.6))/5);
 
 
         //Build draw ECG class
         this.#oECGCanvasElement = new ECGCanvasElementClass(ecgelementid);
         this.SetDrawMode(ECGElementDrawMode);
         this.#oECGCanvasElement.SetConstData(this.#DataAndGridInfo.smGrid_Time,this.#DataAndGridInfo.smGrid_mV);
-        this.#oECGCanvasElement.SetsmGridSize((this.WinWidth/(WidthGridQuantity+0.6))/5);
+        this.#oECGCanvasElement.SetsmGridSize((this.#MainWinPosInfo.width/(WidthGridQuantity+0.6))/5);
 
         this.#oECGCanvasElement.AddEventCallBack(ECGCanvasElementClass.CallBackFuncID.ECGElementMouseMove, this.#ECGElementMouseMove);
         this.#oECGCanvasElement.AddEventCallBack(ECGCanvasElementClass.CallBackFuncID.ECGElementMouseDown, this.#ECGElementMouseDown);
@@ -106,25 +109,25 @@ class ECGDrawElement{
         this.#DataAndGridInfo.smGrid_mV = smmV
 
         var WidthGridQuantity = this.#DataAndGridInfo.WinTotleSec/(this.#DataAndGridInfo.smGrid_Time*5);
-        console.log('WidthGridQuantity',WidthGridQuantity)
-        this.#ObjGridElement.SetsmGridSize((this.WinWidth/(WidthGridQuantity+0.6))/5);
+
+        this.#ObjGridElement.SetsmGridSize((this.#MainWinPosInfo.width/(WidthGridQuantity+0.6))/5);
         var ECGElementInfo = this.#oECGCanvasElement.GetCanvasInfo();
         var GridElementInfo = this.#ObjGridElement.GetCanvasInfo();
         this.#ObjGridElement.SetSymmVText(this.#DataAndGridInfo.smGrid_mV * ECGElementInfo.Gain * 10);
         this.OuterWinElement.style['left'] =Math.round(GridElementInfo.smGridSize * 3)+'px';
-        this.OuterWinElement.style['width'] = (this.WinWidth-Math.round(GridElementInfo.smGridSize * 3))+'px';
+        this.OuterWinElement.style['width'] = (this.#MainWinPosInfo.width-Math.round(GridElementInfo.smGridSize * 3))+'px';
 
         switch(this.#Element_Info.Mode){
             case ECGDrawElement.ObjElementMode.Dynamic_DrawingECG:
-                this.#oECGCanvasElement.SetCanvasSize(this.WinWidth - GridElementInfo.smGridSize * 3, this.WinHeight);        
+                this.#oECGCanvasElement.SetCanvasSize(this.#MainWinPosInfo.width - GridElementInfo.smGridSize * 3, this.#MainWinPosInfo.height);        
                 break;
             case ECGDrawElement.ObjElementMode.Static_DrawingECG:
-                this.#oECGCanvasElement.SetCanvasSize(ECGElementInfo.ECGData_Sec / this.#DataAndGridInfo.smGrid_Time * GridElementInfo.smGridSize /*+ GridElementInfo.smGridSize * 3*/, this.WinHeight);    
+                this.#oECGCanvasElement.SetCanvasSize(ECGElementInfo.ECGData_Sec / this.#DataAndGridInfo.smGrid_Time * GridElementInfo.smGridSize , this.#MainWinPosInfo.height);    
                 break;
         }
 
         this.#oECGCanvasElement.SetConstData(this.#DataAndGridInfo.smGrid_Time,this.#DataAndGridInfo.smGrid_mV);
-        this.#oECGCanvasElement.SetsmGridSize((this.WinWidth/(WidthGridQuantity+0.6))/5);
+        this.#oECGCanvasElement.SetsmGridSize((this.#MainWinPosInfo.width/(WidthGridQuantity+0.6))/5);
     }
 
     SetGridMode = (gridmode, value)=>{
@@ -154,6 +157,18 @@ class ECGDrawElement{
         this.#oECGCanvasElement.SetDrawLinePara(ECGLineColor,ECGLineWidth);
     }
 
+    SetRegisterPara = (ResolutionOfSec, Sec)=>{
+        this.#oECGCanvasElement.SetRegisterPara(ResolutionOfSec, Sec);
+        var GridElementInfo = this.#ObjGridElement.GetCanvasInfo();
+        switch(this.#Element_Info.Mode){
+            case ECGDrawElement.ObjElementMode.Dynamic_DrawingECG:
+                this.#oECGCanvasElement.SetCanvasSize(this.#MainWinPosInfo.width - GridElementInfo.smGridSize * 3, this.#MainWinPosInfo.height);        
+                break;
+            case ECGDrawElement.ObjElementMode.Static_DrawingECG:
+                this.#oECGCanvasElement.SetCanvasSize(Sec / this.#DataAndGridInfo.smGrid_Time * GridElementInfo.smGridSize , this.#MainWinPosInfo.height);    
+                break;
+        }
+    }
 
     ClearECG=()=>{
         this.#oECGCanvasElement.ClearView();
@@ -178,7 +193,7 @@ class ECGDrawElement{
         this.PastEvent.x = PositionInfoInfo.pastx;
         this.PastEvent.y = PositionInfoInfo.pasty;
 
-        this.WinElement.scrollTo(this.ShowPos.x, this.ShowPos.y);
+        this.InnerWinElement.scrollTo(this.ShowPos.x, this.ShowPos.y);
     }
 
     GetMainWinInfo=()=>{
@@ -193,10 +208,10 @@ class ECGDrawElement{
 
     GetWinInfo=()=>{
         var Info = {};
-        Info.top = this.WinElement.offsetTop;
-        Info.left = this.WinElement.offsetLeft;
-        Info.width= this.WinElement.offsetWidth; 
-        Info.height = this.WinElement.offsetHeight;
+        Info.top = this.InnerWinElement.offsetTop;
+        Info.left = this.InnerWinElement.offsetLeft;
+        Info.width= this.InnerWinElement.offsetWidth; 
+        Info.height = this.InnerWinElement.offsetHeight;
         Info.Id = this.WinId;
         return Info;
     }
@@ -220,14 +235,14 @@ class ECGDrawElement{
             case ECGDrawElement.ObjGainItem['Gain_1.0']:
             case ECGDrawElement.ObjGainItem['Gain_2.0']:
             case ECGDrawElement.ObjGainItem['Gain_4.0']:
-                return this.#oECGCanvasElement.SetGainInfo(gain);
+                if(!this.#oECGCanvasElement.SetGainInfo(gain))
+                    return false;
                 break;
             default:
                 return false;
                 break;
         }
         var ECGElementInfo = this.#oECGCanvasElement.GetCanvasInfo();
-        var GridElementInfo = this.#ObjGridElement.GetCanvasInfo();
         this.#ObjGridElement.SetSymmVText(this.#DataAndGridInfo.smGrid_mV * ECGElementInfo.Gain * 10);
         return true;
     }
@@ -239,15 +254,15 @@ class ECGDrawElement{
         var ECGElementInfo = this.#oECGCanvasElement.GetCanvasInfo();
         var GridElementInfo = this.#ObjGridElement.GetCanvasInfo();
         this.OuterWinElement.style['left'] = Math.round(GridElementInfo.smGridSize * 3)+'px';
-        this.OuterWinElement.style['width'] = (this.WinWidth-Math.round(GridElementInfo.smGridSize * 3))+'px';
+        this.OuterWinElement.style['width'] = (this.#MainWinPosInfo.width-Math.round(GridElementInfo.smGridSize * 3))+'px';
         switch(ElementMode){
             case ECGDrawElement.ObjElementMode.Dynamic_DrawingECG:          
                 this.#Element_Info.Mode = ElementMode;  
-                this.#oECGCanvasElement.SetCanvasSize(this.WinWidth - GridElementInfo.smGridSize * 3, this.WinHeight);      
+                this.#oECGCanvasElement.SetCanvasSize(this.#MainWinPosInfo.width - GridElementInfo.smGridSize * 3, this.#MainWinPosInfo.height);      
                 break;
             case ECGDrawElement.ObjElementMode.Static_DrawingECG:       
                 this.#Element_Info.Mode = ElementMode;
-                this.#oECGCanvasElement.SetCanvasSize(ECGElementInfo.ECGData_Sec / this.#DataAndGridInfo.smGrid_Time * GridElementInfo.smGridSize, this.WinHeight);
+                this.#oECGCanvasElement.SetCanvasSize(ECGElementInfo.ECGData_Sec / this.#DataAndGridInfo.smGrid_Time * GridElementInfo.smGridSize, this.#MainWinPosInfo.height);
                 break;
             default:                                                        
                 return false;
@@ -286,48 +301,42 @@ class ECGDrawElement{
     //********************************************************************************/
 
     #WinElementResize = (event)=>{
-        var MainWinPosInfo = this.GetMainWinInfo();
+        this.#MainWinPosInfo = this.GetMainWinInfo();
 
-            this.WinWidth = MainWinPosInfo.width; 
-            this.WinHeight = MainWinPosInfo.height;
-            
-            
-            if(this.#CallBackFunList[ECGDrawElement.CallBackFuncID.WindowResize]!=undefined){
-                this.#CallBackFunList[ECGDrawElement.CallBackFuncID.WindowResize](this.WinElement.id,this.GetWinInfo());
-            }
-            this.ClearGrid();
-            this.#ObjGridElement.SetCanvasSize(this.WinWidth,this.WinHeight);
+        if(this.#CallBackFunList[ECGDrawElement.CallBackFuncID.WindowResize]!=undefined){
+            this.#CallBackFunList[ECGDrawElement.CallBackFuncID.WindowResize](this.InnerWinElement.id,this.GetWinInfo());
+        }
+        this.ClearGrid();
+        this.#ObjGridElement.SetCanvasSize(this.#MainWinPosInfo.width,this.#MainWinPosInfo.height);
 
-            var WidthGridQuantity = this.#DataAndGridInfo.WinTotleSec/(this.#DataAndGridInfo.smGrid_Time * 5);
-            console.log('this.WinWidth',this.WinWidth)
-            console.log('WidthGridQuantity',WidthGridQuantity);
-            console.log('(this.MainWinPosInfo.WinWidth/(WidthGridQuantity+0.6))/5',MainWinPosInfo.width,(WidthGridQuantity+0.6)/5)
-            this.#ObjGridElement.SetsmGridSize((MainWinPosInfo.width/(WidthGridQuantity+0.6))/5);
-            //console.log('(this.WinWidth/(WidthGridQuantity+0.6))/5',(this.WinWidth/(WidthGridQuantity+0.6))/5);
-            this.DrawGrid();
-            
+        var WidthGridQuantity = this.#DataAndGridInfo.WinTotleSec/(this.#DataAndGridInfo.smGrid_Time * 5);
 
-            this.CloseDrawECG();
+        this.#ObjGridElement.SetsmGridSize((this.#MainWinPosInfo.width/(WidthGridQuantity+0.6))/5);
 
-            var GridElementInfo = this.#ObjGridElement.GetCanvasInfo();
-            var ECGElementInfo= this.#oECGCanvasElement.GetCanvasInfo();
+        this.DrawGrid();
+        
 
-            this.OuterWinElement.style['left'] = Math.round(GridElementInfo.smGridSize * 3)+'px';
-            this.OuterWinElement.style['width'] = (this.WinWidth-Math.round(GridElementInfo.smGridSize * 3))+'px';
+        this.CloseDrawECG();
 
-            switch(this.#Element_Info.Mode){
-                case ECGDrawElement.ObjElementMode.Dynamic_DrawingECG:
-                    this.#oECGCanvasElement.SetCanvasSize(this.WinWidth - GridElementInfo.smGridSize * 3, this.WinHeight);        
-                    break;
-                case ECGDrawElement.ObjElementMode.Static_DrawingECG:
-                    this.#oECGCanvasElement.SetCanvasSize(ECGElementInfo.ECGData_Sec / this.#DataAndGridInfo.smGrid_Time * GridElementInfo.smGridSize , this.WinHeight);    
-                    break;
-            }
+        var GridElementInfo = this.#ObjGridElement.GetCanvasInfo();
+        var ECGElementInfo= this.#oECGCanvasElement.GetCanvasInfo();
 
-            this.#oECGCanvasElement.SetsmGridSize(GridElementInfo.smGridSize);
+        this.OuterWinElement.style['left'] = Math.round(GridElementInfo.smGridSize * 3)+'px';
+        this.OuterWinElement.style['width'] = (this.#MainWinPosInfo.width-Math.round(GridElementInfo.smGridSize * 3))+'px';
 
-            this.#oECGCanvasElement.ResetIndex();
-            this.StartDrawECG();
+        switch(this.#Element_Info.Mode){
+            case ECGDrawElement.ObjElementMode.Dynamic_DrawingECG:
+                this.#oECGCanvasElement.SetCanvasSize(this.#MainWinPosInfo.width - GridElementInfo.smGridSize * 3, this.#MainWinPosInfo.height);        
+                break;
+            case ECGDrawElement.ObjElementMode.Static_DrawingECG:
+                this.#oECGCanvasElement.SetCanvasSize(ECGElementInfo.ECGData_Sec / this.#DataAndGridInfo.smGrid_Time * GridElementInfo.smGridSize , this.#MainWinPosInfo.height);    
+                break;
+        }
+
+        this.#oECGCanvasElement.SetsmGridSize(GridElementInfo.smGridSize);
+
+        this.#oECGCanvasElement.ResetIndex();
+        this.StartDrawECG();
             
         
     }
@@ -364,10 +373,10 @@ class ECGDrawElement{
             this.PastEvent.x = event.pageX;
             this.PastEvent.y = event.pageY;
 
-            this.WinElement.scrollTo(this.ShowPos.x, this.ShowPos.y);
+            this.InnerWinElement.scrollTo(this.ShowPos.x, this.ShowPos.y);
 
             if(this.#CallBackFunList[ECGDrawElement.CallBackFuncID.ECGElementMouseMove]!=undefined){
-                this.#CallBackFunList[ECGDrawElement.CallBackFuncID.ECGElementMouseMove](this.WinElement.id,this.GetWinPosition());
+                this.#CallBackFunList[ECGDrawElement.CallBackFuncID.ECGElementMouseMove](this.InnerWinElement.id,this.GetWinPosition());
             }
         }
     }
@@ -376,7 +385,7 @@ class ECGDrawElement{
         console.log(event.pageX, event.pageY);
         this.Clicked = true;
         if(this.#CallBackFunList[ECGDrawElement.CallBackFuncID.ECGElementMouseDown]!=undefined){
-            this.#CallBackFunList[ECGDrawElement.CallBackFuncID.ECGElementMouseDown](this.WinElement.id,this.GetWinPosition());
+            this.#CallBackFunList[ECGDrawElement.CallBackFuncID.ECGElementMouseDown](this.InnerWinElement.id,this.GetWinPosition());
         }
     }
 
@@ -384,9 +393,34 @@ class ECGDrawElement{
         if(this.Clicked){
             this.Clicked = false;
             if(this.#CallBackFunList[ECGDrawElement.CallBackFuncID.ECGElementMouseUp]!=undefined){
-                this.#CallBackFunList[ECGDrawElement.CallBackFuncID.ECGElementMouseUp](this.WinElement.id,this.GetWinPosition());
+                this.#CallBackFunList[ECGDrawElement.CallBackFuncID.ECGElementMouseUp](this.InnerWinElement.id,this.GetWinPosition());
             }
         }
+    }
+
+
+    #CSSCtrl_ShowerWin=()=>{
+        this.ShowerWinElement.style['position']='relative';
+        this.ShowerWinElement.style['background-color']='#000000';
+        this.ShowerWinElement.style['width']='100%';
+        this.ShowerWinElement.style['height']='100%';
+    }
+    #CSSCtrl_Outer = ()=>{
+        this.OuterWinElement.style['position'] = 'relative';
+        this.OuterWinElement.style['overflow'] = 'hidden';
+        this.OuterWinElement.style['width']='100%';
+        this.OuterWinElement.style['height']='100%';
+    }
+
+    #CSSCtrl_Innter = ()=>{
+        this.InnerWinElement.style['position'] = 'absolute';
+        this.InnerWinElement.style['top'] = '0px'
+        this.InnerWinElement.style['left'] = '0px'
+        this.InnerWinElement.style['overflow-x'] = 'scroll'
+        this.InnerWinElement.style['overflow-y'] = 'scroll'
+        this.InnerWinElement.style['width'] = '100%';
+        this.InnerWinElement.style['height'] = '100%';
+        this.InnerWinElement.style['::-webkit-scrollbar'] = '100%';
     }
 }
 
