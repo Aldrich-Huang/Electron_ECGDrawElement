@@ -120,17 +120,16 @@ class ECGCanvasElement{
                     
 
                     this.#NowEcgData_smGrid = Math.floor((this.#NowEcgData.ECGData / (this.#ConstData.VoltageUnit / this.#Canvas_Info.Gain))*(this.#Canvas_Info.smGridSize));
-                    console.log(this.#ConstData.VoltageUnit,this.#Canvas_Info.Gain,this.#Canvas_Info.smGridSize)
-
-                    this.#Elementctx.clearRect(this.#Canvas_Info.smGridSize * 3+this.#DrawECGIndex, 0, 25, this.#Element.height);
-
-                    this.#drawLine(this.#Canvas_Info.smGridSize * 3+this.#DrawECGIndex-1, (this.#Element.height/2) + this.#PreEcgData_smGrid,
-                                    this.#Canvas_Info.smGridSize * 3+this.#DrawECGIndex, (this.#Element.height/2) + this.#NowEcgData_smGrid);
-
-
-                    this.#DrawECGIndex = this.#DrawECGIndex + 1;
                     
-                    if(this.#DrawECGIndex+this.#Canvas_Info.smGridSize * 3 >= this.#Element.width){
+                    this.#Elementctx.clearRect(+this.#DrawECGIndex, 0, 25, this.#Element.height);
+
+                    this.#drawLine(this.#DrawECGIndex-1, (this.#Element.height/2) + this.#PreEcgData_smGrid,
+                                    this.#DrawECGIndex, (this.#Element.height/2) + this.#NowEcgData_smGrid);
+
+
+                    this.#DrawECGIndex = this.#DrawECGIndex + 1 ;
+                    
+                    if(this.#DrawECGIndex>= this.#Element.width){
                         this.ResetIndex();
                     }
                     this.#PreEcgData_smGrid = this.#NowEcgData_smGrid;
@@ -158,8 +157,8 @@ class ECGCanvasElement{
             this.#NowEcgData_smGrid = Math.floor((ECGDataBuf[indx] / (this.#ConstData.VoltageUnit / this.#Canvas_Info.Gain))*(this.#Canvas_Info.smGridSize));
 
 
-            this.#drawLine(this.#Canvas_Info.smGridSize * 3+this.#DrawECGIndex-1, (this.#Element.height/2) + this.#PreEcgData_smGrid,
-            this.#Canvas_Info.smGridSize * 3+this.#DrawECGIndex, (this.#Element.height/2) + this.#NowEcgData_smGrid);
+            this.#drawLine(this.#DrawECGIndex-1, (this.#Element.height/2) + this.#PreEcgData_smGrid,
+            this.#DrawECGIndex, (this.#Element.height/2) + this.#NowEcgData_smGrid);
 
 
             this.#DrawECGIndex = this.#DrawECGIndex + 1;

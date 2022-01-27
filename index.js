@@ -78,7 +78,7 @@ for(var run=0;run<10000;run++){
 }
 
 
-//DrawECGWindowCtrler.SetDrawMode(null,ECGDrawElementCtrlClass.ObjElementMode.Dynamic_DrawingECG);
+// DrawECGWindowCtrler.SetDrawMode(null,ECGDrawElementCtrlClass.ObjElementMode.Dynamic_DrawingECG);
 TestFunction = ()=>{
   try{
       if(ElementIdList.length>0){
@@ -112,7 +112,7 @@ TestFunction = ()=>{
 
 if(ElementIdList.length>0){
     console.log('Start')
-    //IntervalID = setInterval(TestFunction, 10); 
+    // IntervalID = setInterval(TestFunction, 10); 
 }
 
 DrawECGWindowCtrler.StartDrawECG();

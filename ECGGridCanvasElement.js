@@ -121,6 +121,8 @@ class ECGGridCanvasElement{
 
     SetSymmVText = (mv)=>{
         this.#SymmVText = mv+'mV';
+        this.ClearView();
+        this.Draw();
     }
     
     AddEventCallBack = (CallBackMode, CallBackFunc) => {

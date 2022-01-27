@@ -30,7 +30,7 @@ class ECGDrawElementCtrl{
                 this.DrawElementList[Index].SetDrawGridPara(GridColor,GridWidth);
                 this.DrawElementList[Index].SetDrawECGPara(ECGColor,ECGWidth);
                 this.DrawElementList[Index].DrawGrid();
-                //this.DrawElementList[Index].SetGain(ECGDrawElementClass.ObjGainItem['Gain_4.0']);
+                //this.DrawElementList[Index].SetGain(ECGDrawElementClass.ObjGainItem['Gain_2.0']);
             }catch (e){
                 console.error(e);
             }
