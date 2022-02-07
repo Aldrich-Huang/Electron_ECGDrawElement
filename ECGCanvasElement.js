@@ -9,16 +9,18 @@
 // -------------------------------------------------------------------------------------------------------
 
 const ECGDataRegisterClass = require('./ECGDataRegister.js').ECGDataRegister;
+const ECGBasicLineCorrectionClass = require('./ECGBasicLineCorrection.js').ECGBasicLineCorrection;
 
 class ECGCanvasElement{
     static CallBackFuncID = {'WindowResize': 0, 'ECGElementMouseMove':1,'ECGElementMouseDown':2,'ECGElementMouseUp':3}
     static ObjGainItem = {'Gain_0.5':0.5,'Gain_1.0':1.0,'Gain_2.0':2.0,'Gain_4.0':4.0}; 
     #ConstData = {'TimeUnit':0.2, 'VoltageUnit':0.1}
-    #Canvas_Info = {'Color': '#00c100', 'LineWidth': 1,'smGridSize': 5,'ECGQuantity_Sec':500,'ECGData_Sec':20,'Gain':ECGCanvasElement.ObjGainItem['Gain_1.0']};
+    #Canvas_Info = {'Color': '#00c100', 'LineWidth': 1,'smGridSize': 5,'ECGQuantity_Sec':500,'ECGData_Sec':10,'Gain':ECGCanvasElement.ObjGainItem['Gain_1.0']};
     
     #Element;
     #Elementctx;
     #ECGDataRegister;
+    #BasicLineCorrection;
     #ECGIntervalID
 
     #DrawECGIndex = 0;
@@ -27,7 +29,7 @@ class ECGCanvasElement{
 
     #NowEcgData_smGrid = 0;
     #PreEcgData_smGrid = 0;
-
+    #BasicLine=0;
     constructor(ElementID) {
         this.#Element = document.getElementById(ElementID);
         if(this.#Element.getContext){
@@ -36,7 +38,7 @@ class ECGCanvasElement{
 
         var RegisterSize = this.#Canvas_Info.ECGQuantity_Sec * this.#Canvas_Info.ECGData_Sec;
         this.#ECGDataRegister = new ECGDataRegisterClass(RegisterSize);
-
+        this.#BasicLineCorrection = new ECGBasicLineCorrectionClass();
     }
 
     GetCanvasInfo(){
@@ -176,11 +178,10 @@ class ECGCanvasElement{
             this.#NowEcgData = this.#ECGDataRegister.GetData();
             
             if(this.#NowEcgData.state){
-
+                this.#BasicLineCorrection.SetData(this.#NowEcgData.ECGData);
                 if((this.#CounterIndex)===indx){
-                    
 
-                    this.#NowEcgData_smGrid = Math.floor((this.#NowEcgData.ECGData / (this.#ConstData.VoltageUnit / this.#Canvas_Info.Gain))*(this.#Canvas_Info.smGridSize));
+                    this.#NowEcgData_smGrid = Math.floor((this.#NowEcgData.ECGData / (this.#ConstData.VoltageUnit / this.#Canvas_Info.Gain))*(this.#Canvas_Info.smGridSize)) - this.#BasicLine;
                     
                     this.#Elementctx.clearRect(+this.#DrawECGIndex, 0, 25, this.#Element.height);
                     
@@ -190,6 +191,9 @@ class ECGCanvasElement{
                     this.#DrawECGIndex = this.#DrawECGIndex + 1 ;
                     
                     if(this.#DrawECGIndex>= this.#Element.width){
+                        //console.log(this.#BasicLineCorrection.GetBasicLine() / (this.#ConstData.VoltageUnit / this.#Canvas_Info.Gain)*(this.#Canvas_Info.smGridSize));
+                        this.#BasicLine = Math.floor(this.#BasicLineCorrection.GetBasicLine() / (this.#ConstData.VoltageUnit / this.#Canvas_Info.Gain)*(this.#Canvas_Info.smGridSize));
+                        this.#BasicLineCorrection.Clear();
                         this.ResetIndex();
                     }
                     this.#PreEcgData_smGrid = this.#NowEcgData_smGrid;
@@ -209,6 +213,7 @@ class ECGCanvasElement{
         this.#Elementctx.stroke();
         this.#Elementctx.closePath();
     }
+
 
 }
 

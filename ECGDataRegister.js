@@ -44,6 +44,7 @@ class ECGDataRegister{
 
     constructor(ListSize) {
         this.#DataList = new Array(ListSize);
+        console.log('this.#DataList=>>>>',this.#DataList)
         this.#InputIndex = 0;
         this.#InputOverflow = false;
         this.#OutputIndex = -1;
@@ -81,20 +82,24 @@ class ECGDataRegister{
                 }
                 this.#InputOverflow = false;
             }
+            this.#OutputIndex = (this.#OutputIndex + 1) % this.#DataList.length;
+
             Result.state = true;
             Result.Index = this.#OutputIndex;
             Result.ECGData = this.#DataList[this.#OutputIndex];
-            this.#OutputIndex = (this.#OutputIndex + 1) % this.#DataList.length;
+            
             return Result;
 
         }else{
             if(this.#OutputIndex + 1 >= this.#InputIndex){
                 return Result;
             }
+            this.#OutputIndex = (this.#OutputIndex + 1) % this.#DataList.length;
+            
             Result.state = true;
             Result.Index = this.#OutputIndex;
             Result.ECGData = this.#DataList[this.#OutputIndex];
-            this.#OutputIndex = (this.#OutputIndex + 1) % this.#DataList.length;
+            
             return Result;
         }
 

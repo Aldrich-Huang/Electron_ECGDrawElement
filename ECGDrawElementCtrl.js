@@ -6,12 +6,13 @@ class ECGDrawElementCtrl{
                         'FixedGridQuantity_W': ECGDrawElementClass.ObjGridMode.FixedGridQuantity_W}
 
     static ObjElementMode = ECGDrawElementClass.ObjElementMode;
-    
+    static ObjGainItem = ECGDrawElementClass.ObjGainItem;
     DrawElementList=[];
     IntervalID;
     #ECGDataListIndex = 0;
     #ECGDataList=[];
-    constructor(ElementInfo, GridColor,GridWidth,ECGColor,ECGWidth) {
+
+    constructor(ElementInfo, GridColor = '#999999', GridWidth = 1, ECGColor = '#00c100', ECGWidth = 2) {
         var Index=0;
 
         for(var i = 0 ;i<ElementInfo.length;i++){
@@ -25,13 +26,10 @@ class ECGDrawElementCtrl{
                 Index = this.DrawElementList.length-1;
                 this.DrawElementList[Index].AddEventCallBack( ECGDrawElementClass.CallBackFuncID.ECGElementMouseMove, this.#CallBack_ECGEleMouseMove);
                 this.DrawElementList[Index].AddEventCallBack( ECGDrawElementClass.CallBackFuncID.WindowResize, this.#CallBack_WindowResize);
-                this.DrawElementList[Index].SetCanvasPara(10,1.5,0.2,0.1);
-                this.DrawElementList[Index].SetRegisterPara(500,20);
-                //this.DrawElementList[Index].SetGridMode(ECGDrawElementCtrl.ObjGridMode.FixedGridQuantity_W, 10);
+                //this.DrawElementList[Index].SetCanvasPara(10,1.5,0.2,0.1);
+                //this.DrawElementList[Index].SetRegisterPara(500,20);
                 this.DrawElementList[Index].SetDrawGridPara(GridColor,GridWidth);
                 this.DrawElementList[Index].SetDrawECGPara(ECGColor,ECGWidth);
-                this.DrawElementList[Index].DrawGrid();
-                //this.DrawElementList[Index].SetGain(ECGDrawElementClass.ObjGainItem['Gain_4.0']);
                 
             }catch (e){
                 console.error(e);
@@ -41,8 +39,48 @@ class ECGDrawElementCtrl{
 
     }
 
-    SetECGTest = (Data)=>{
-        this.DrawElementList[0].SetECGData(Data);
+//Drawing grid unit.
+    SetAllGridCanvasPara = (Sec,mV,smSec,smmV)=>{
+        for(var i = 0 ;i<this.DrawElementList.length;i++){
+            this.DrawElementList[i].SetCanvasPara(Sec,mV,smSec,smmV);
+        }
+        
+    }
+
+    SetGridCanvasPara = (Sec,mV,smSec,smmV)=>{
+        for(var i = 0 ;i<this.DrawElementList.length;i++){
+            if(this.DrawElementList[i].GetWinInfo().Id === ElementId){
+                this.DrawElementList[i].SetCanvasPara(Sec,mV,smSec,smmV);
+            }
+        }
+        
+    }
+
+    SetECGRegisterPara = (ResolutionOfSec, Sec)=>{
+        for(var i = 0 ;i<this.DrawElementList.length;i++){
+            this.DrawElementList[i].SetRegisterPara(ResolutionOfSec, Sec);
+        }
+
+    }
+
+    SetDrawGridPara = (GridColor,GridWidth)=>{
+        for(var i = 0 ;i<this.DrawElementList.length;i++){
+            this.DrawElementList[Index].SetDrawGridPara(GridColor,GridWidth);
+        }
+
+    }
+
+    SetDrawECGPara = (ECGColor,ECGWidth)=>{
+        for(var i = 0 ;i<this.DrawElementList.length;i++){
+            this.DrawElementList[Index].SetDrawECGPara(ECGColor,ECGWidth);
+        }
+
+    }
+
+    SetGain = (gain)=>{
+        for(var i = 0 ;i<this.DrawElementList.length;i++){
+            this.DrawElementList[i].SetGain(gain);
+        }
     }
 
     GetElementIDList = ()=>{
@@ -54,23 +92,29 @@ class ECGDrawElementCtrl{
         return ElementIdList;
     }
 
-    SetDrawMode(ElementId,ElementMode){
+    SetDrawMode(ElementMode){
         for(var i = 0 ;i<this.DrawElementList.length;i++){
-            if(ElementId==null || this.DrawElementList[i].GetWinInfo().Id === ElementId){
-                this.DrawElementList[i].SetDrawMode(ElementMode);
-            }
-        }
-        
-    }
-
-    SetECGData = (ElementId,Data)=>{
-        for(var i = 0 ;i<this.DrawElementList.length;i++){
-            if(ElementId==null || this.DrawElementList[i].GetWinInfo().Id === ElementId){
-                this.DrawElementList[i].SetECGData(Data)
-            }
+            this.DrawElementList[i].SetDrawMode(ElementMode);
         }
     }
 
+    //Set ECG Data.
+    SetECGData = (DataList)=>{
+        for(var i = 0 ;i<this.DrawElementList.length;i++){
+            this.DrawElementList[i].SetECGData(DataList[i])
+        }
+    }
+
+    //Draw grid.
+    DrawGrid(ElementId){
+        for(var i = 0 ;i<this.DrawElementList.length;i++){
+            if(ElementId==null || this.DrawElementList[i].GetWinInfo().Id === ElementId){
+                this.DrawElementList[i].DrawGrid();
+            }
+        }
+    }
+
+    //Draw ECG.
     StartDrawECG = (ElementId)=>{
         for(var i = 0 ;i<this.DrawElementList.length;i++){
             if(ElementId==null || this.DrawElementList[i].GetWinInfo().Id === ElementId){
@@ -79,46 +123,6 @@ class ECGDrawElementCtrl{
         }
         
     }
-
-
-    // SetGeidParameter = (GridColor,GridWidth,Setid=null)=>{
-    //     return new Promise((acc, rej) => {
-    //         if(this.DrawElementList.length<0){
-    //             rej(false);
-    //         }
-                
-    //         for(var i = 0 ;i<this.DrawElementList.length;i++){
-    //             if(Setid==null || this.DrawElementList[i].GetWinInfo().Id === Setid){
-    //                 console.log('Setid',Setid);
-    //                 this.DrawElementList[Index].SetDrawGridPara(GridColor,GridWidth);
-    //                 this.DrawElementList[i].DrawGrid();
-
-    //             }
-    //         }
-            
-    //         acc(true);
-    //     });
-    // }
-
-    // SetGridSize = (GridSize,Setid=null)=>{
-    //     return new Promise((acc, rej) => {
-    //         if(this.DrawElementList.length<0){
-    //             rej(false);
-    //         }
-                
-    //         for(var i = 0 ;i<this.DrawElementList.length;i++){
-    //             if(Setid==null || this.DrawElementList[i].GetWinInfo().Id === Setid){
-    //                 console.log('Setid',Setid);
-    //                 this.DrawElementList[Index].SetGridSize(GridSize);
-    //                 this.DrawElementList[i].DrawGrid();
-
-    //             }
-    //         }
-            
-    //         acc(true);
-    //     });
-    // }
-
 
 
 //----------------------------------------------------------------------

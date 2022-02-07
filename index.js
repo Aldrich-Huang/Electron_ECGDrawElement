@@ -48,45 +48,51 @@ for (let i = 0, buf; i < 5000; i++) {
 
 
 
-let DrawECGWindowCtrler = new ECGDrawElementCtrlClass(elementInfoArr,'#999999',1,'#00c100',2);
+let DrawECGWindowCtrler = new ECGDrawElementCtrlClass(elementInfoArr);
+DrawECGWindowCtrler.SetAllGridCanvasPara(10,1.5,0.2,0.2)
+DrawECGWindowCtrler.SetGain(ECGDrawElementCtrlClass.ObjGainItem['Gain_2.0']);
 
-
-
-
+DrawECGWindowCtrler.DrawGrid();
 var ElementIdList =  DrawECGWindowCtrler.GetElementIDList()
 
-for(var run=0;run<15000;run++){
-    for(var i = 0 ;i<this.ElementIdList.length;i++){
-      DrawECGWindowCtrler.SetECGData(ElementIdList[i],ECGBUF);
-    }
-    ECGDataListIndex =(ECGDataListIndex+1) % ECGDataList.length;
-    if(ECGDataListIndex % 1000 ===0){
-      ECGBUF=0.1;
-    }
-    if(ECGDataListIndex % 2000 ===0){
-      ECGBUF=0.2;
-    }
-    if(ECGDataListIndex % 3000 ===0){
-      ECGBUF=0.3;
-    }
-    if(ECGDataListIndex % 4000 ===0){
-      ECGBUF=0.4;
-    }
-    if(ECGDataListIndex % 5000 ===0){
-      ECGBUF=0;
-    }
-}
+// for(var run=0;run<15000;run++){
+////     for(var i = 0 ;i<this.ElementIdList.length;i++){
+////       DrawECGWindowCtrler.SetECGData(ElementIdList[i],ECGBUF);
+////     }
+// for(var i = 0 ;i<ElementIdList.length;i++){
+//   DataList[i] = ECGBUF;
+// }
+// DrawECGWindowCtrler.SetECGData(DataList);
+
+//     ECGDataListIndex =(ECGDataListIndex+1) % ECGDataList.length;
+//     if(ECGDataListIndex % 1000 ===0){
+//       ECGBUF=0.1;
+//     }
+//     if(ECGDataListIndex % 2000 ===0){
+//       ECGBUF=0.2;
+//     }
+//     if(ECGDataListIndex % 3000 ===0){
+//       ECGBUF=0.3;
+//     }
+//     if(ECGDataListIndex % 4000 ===0){
+//       ECGBUF=0.4;
+//     }
+//     if(ECGDataListIndex % 5000 ===0){
+//       ECGBUF=0;
+//     }
+// }
 
 
-// DrawECGWindowCtrler.SetDrawMode(null,ECGDrawElementCtrlClass.ObjElementMode.Dynamic_DrawingECG);
+DrawECGWindowCtrler.SetDrawMode(ECGDrawElementCtrlClass.ObjElementMode.Dynamic_DrawingECG);
 TestFunction = ()=>{
   try{
       if(ElementIdList.length>0){
+        let DataList = new Array(ElementIdList.length);
           for(var run=0;run<5;run++){
               for(var i = 0 ;i<ElementIdList.length;i++){
-                DrawECGWindowCtrler.SetECGData(ElementIdList[i],ECGBUF);
-                
+                DataList[i] = ECGBUF;
               }
+              DrawECGWindowCtrler.SetECGData(DataList);
               ECGDataListIndex =(ECGDataListIndex+1) % ECGDataList.length;
               if(ECGDataListIndex % 1000 ===0){
                 ECGBUF=0.1;
@@ -112,7 +118,7 @@ TestFunction = ()=>{
 
 if(ElementIdList.length>0){
     console.log('Start')
-    // IntervalID = setInterval(TestFunction, 10); 
+    IntervalID = setInterval(TestFunction, 10); 
 }
 
 DrawECGWindowCtrler.StartDrawECG();
